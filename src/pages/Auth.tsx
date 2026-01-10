@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Car, Loader2 } from "lucide-react";
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,22 +18,12 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast({ title: "Welcome back!", description: "Successfully signed in." });
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast({ title: "Account created!", description: "You can now sign in." });
-        setIsLogin(true);
-      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      toast({ title: "Welcome back!", description: "Successfully signed in." });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -60,13 +49,9 @@ export default function Auth() {
 
         <Card className="bg-card border-border shadow-card">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-xl">
-              {isLogin ? "Sign in" : "Create account"}
-            </CardTitle>
+            <CardTitle className="text-xl">Sign in</CardTitle>
             <CardDescription>
-              {isLogin
-                ? "Enter your credentials to access the dashboard"
-                : "Enter your details to create your account"}
+              Enter your credentials to access the dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -102,21 +87,13 @@ export default function Auth() {
                 disabled={loading}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLogin ? "Sign In" : "Create Account"}
+                Sign In
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-primary hover:underline"
-              >
-                {isLogin
-                  ? "Don't have an account? Sign up"
-                  : "Already have an account? Sign in"}
-              </button>
-            </div>
+            <p className="mt-6 text-center text-xs text-muted-foreground">
+              Contact your administrator for account access
+            </p>
           </CardContent>
         </Card>
       </div>
