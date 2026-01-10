@@ -18,6 +18,7 @@ import TripHistory from "./pages/TripHistory";
 import EnergyLogs from "./pages/EnergyLogs";
 import Ledger from "./pages/Ledger";
 import Analytics from "./pages/Analytics";
+import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +96,7 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/cars" element={<ProtectedRoute><Cars /></ProtectedRoute>} />
           <Route path="/drivers" element={<ProtectedRoute><Drivers /></ProtectedRoute>} />
           <Route path="/routes" element={<ProtectedRoute><RoutesPage /></ProtectedRoute>} />
