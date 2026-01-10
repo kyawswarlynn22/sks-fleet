@@ -62,10 +62,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Assign admin role
+    // Assign admin role with email
     const { error: roleError } = await adminClient
       .from("user_roles")
-      .insert({ user_id: newUser.user.id, role: "admin" });
+      .insert({ user_id: newUser.user.id, role: "admin", email });
 
     if (roleError) {
       console.error("Failed to assign role:", roleError);

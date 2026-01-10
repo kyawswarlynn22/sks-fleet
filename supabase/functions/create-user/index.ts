@@ -89,10 +89,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Assign role
+    // Assign role with email
     const { error: roleError } = await adminClient
       .from("user_roles")
-      .insert({ user_id: newUser.user.id, role });
+      .insert({ user_id: newUser.user.id, role, email });
 
     if (roleError) {
       // Rollback user creation if role assignment fails
