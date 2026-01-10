@@ -14,6 +14,7 @@ import Drivers from "./pages/Drivers";
 import RoutesPage from "./pages/Routes";
 import Preorders from "./pages/Preorders";
 import LiveTrips from "./pages/LiveTrips";
+import TripHistory from "./pages/TripHistory";
 import EnergyLogs from "./pages/EnergyLogs";
 import Ledger from "./pages/Ledger";
 import Analytics from "./pages/Analytics";
@@ -99,6 +100,7 @@ const App = () => (
           <Route path="/routes" element={<ProtectedRoute><RoutesPage /></ProtectedRoute>} />
           <Route path="/preorders" element={<ProtectedRoute><Preorders /></ProtectedRoute>} />
           <Route path="/trips" element={<ProtectedRoute><LiveTrips /></ProtectedRoute>} />
+          <Route path="/trip-history" element={<ProtectedRoute><TripHistory /></ProtectedRoute>} />
           <Route path="/energy" element={<ProtectedRoute><EnergyLogs /></ProtectedRoute>} />
           <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
