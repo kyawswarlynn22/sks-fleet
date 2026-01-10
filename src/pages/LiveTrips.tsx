@@ -1,11 +1,32 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Activity, Car, User, MapPin, Clock, Loader2 } from "lucide-react";
+import { Activity, Car, User, MapPin, Clock, Loader2, Check } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types";
+
+type TripStatus = Database["public"]["Enums"]["trip_status"];
+
+const TRIP_STATUSES: { value: TripStatus; label: string; icon: string }[] = [
+  { value: "idle", label: "Idle", icon: "⏸️" },
+  { value: "heading_to_pickup", label: "Heading to Pickup", icon: "🚗" },
+  { value: "on_highway", label: "On Highway", icon: "🛣️" },
+  { value: "rest_stop", label: "Rest Stop", icon: "☕" },
+  { value: "completed", label: "Completed", icon: "✅" },
+];
 
 export default function LiveTrips() {
+  const queryClient = useQueryClient();
+
   const { data: trips, isLoading } = useQuery({
     queryKey: ["live-trips"],
     queryFn: async () => {
@@ -22,7 +43,31 @@ export default function LiveTrips() {
       if (error) throw error;
       return data;
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 10000,
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ tripId, status }: { tripId: string; status: TripStatus }) => {
+      const updateData: { status: TripStatus; completed_at?: string } = { status };
+      
+      if (status === "completed") {
+        updateData.completed_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from("trips")
+        .update(updateData)
+        .eq("id", tripId);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ["live-trips"] });
+      toast.success(`Trip status updated to ${status.replace(/_/g, " ")}`);
+    },
+    onError: (error) => {
+      toast.error("Failed to update status: " + error.message);
+    },
   });
 
   const getStatusVariant = (status: string) => {
@@ -35,24 +80,19 @@ export default function LiveTrips() {
     }
   };
 
-  const formatStatus = (status: string) => {
-    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const getStatusIcon = (status: string) => {
+    return TRIP_STATUSES.find(s => s.value === status)?.icon || "⏸️";
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'heading_to_pickup': return '🚗';
-      case 'on_highway': return '🛣️';
-      case 'rest_stop': return '☕';
-      default: return '⏸️';
-    }
+  const formatStatus = (status: string) => {
+    return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Live Trip Monitor</h1>
-        <p className="text-muted-foreground">Real-time tracking of active vehicles</p>
+        <p className="text-muted-foreground">Real-time tracking of active vehicles • Click status to update</p>
       </div>
 
       {isLoading ? (
@@ -91,6 +131,35 @@ export default function LiveTrips() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Status Update Selector */}
+                <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                  <label className="text-xs text-muted-foreground mb-2 block">Update Status</label>
+                  <Select
+                    value={trip.status}
+                    onValueChange={(value: TripStatus) => 
+                      updateStatusMutation.mutate({ tripId: trip.id, status: value })
+                    }
+                    disabled={updateStatusMutation.isPending}
+                  >
+                    <SelectTrigger className="w-full bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TRIP_STATUSES.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          <span className="flex items-center gap-2">
+                            <span>{status.icon}</span>
+                            <span>{status.label}</span>
+                            {trip.status === status.value && (
+                              <Check className="w-4 h-4 text-success ml-auto" />
+                            )}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Vehicle Info */}
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
