@@ -48,12 +48,13 @@ export default function LiveTrips() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ tripId, status, preorderId, carId, driverId }: { 
+    mutationFn: async ({ tripId, status, preorderId, carId, driverId, totalFare }: { 
       tripId: string; 
       status: TripStatus; 
       preorderId?: string | null;
       carId: string;
       driverId?: string | null;
+      totalFare?: number | null;
     }) => {
       const updateData: { status: TripStatus; completed_at?: string } = { status };
       
@@ -68,16 +69,35 @@ export default function LiveTrips() {
       
       if (error) throw error;
 
-      // If trip is completed, update preorder status as well
-      if (status === "completed" && preorderId) {
-        await supabase
-          .from("preorders")
-          .update({ status: "completed" })
-          .eq("id", preorderId);
-      }
-
-      // Update car status
+      // If trip is completed, update preorder status and add to ledger
       if (status === "completed") {
+        // Update preorder if linked
+        if (preorderId) {
+          await supabase
+            .from("preorders")
+            .update({ status: "completed" })
+            .eq("id", preorderId);
+        }
+
+        // Add income entry to ledger
+        if (totalFare && totalFare > 0) {
+          const { error: ledgerError } = await supabase
+            .from("ledger")
+            .insert({
+              entry_type: "income",
+              amount: totalFare,
+              description: `Trip completed - #${tripId.slice(0, 8)}`,
+              car_id: carId,
+              driver_id: driverId,
+              trip_id: tripId,
+            });
+          
+          if (ledgerError) {
+            console.error("Failed to add ledger entry:", ledgerError);
+          }
+        }
+
+        // Update car status to idle
         await supabase
           .from("cars")
           .update({ status: "idle" })
@@ -102,6 +122,7 @@ export default function LiveTrips() {
       queryClient.invalidateQueries({ queryKey: ["preorders"] });
       queryClient.invalidateQueries({ queryKey: ["available-drivers"] });
       queryClient.invalidateQueries({ queryKey: ["available-cars"] });
+      queryClient.invalidateQueries({ queryKey: ["ledger"] });
       toast.success(`Trip status updated to ${status.replace(/_/g, " ")}`);
     },
     onError: (error) => {
@@ -199,6 +220,7 @@ export default function LiveTrips() {
                         preorderId: trip.preorder_id,
                         carId: trip.car_id,
                         driverId: trip.driver_id,
+                        totalFare: trip.total_fare ? Number(trip.total_fare) : null,
                       })
                     }
                     disabled={updateStatusMutation.isPending}
