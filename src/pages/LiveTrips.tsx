@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Activity, Car, User, MapPin, Clock, Loader2, Check, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Activity, Car, User, MapPin, Clock, Loader2, Check, Calendar, DollarSign } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   Select,
@@ -26,6 +29,7 @@ const TRIP_STATUSES: { value: TripStatus; label: string; icon: string }[] = [
 
 export default function LiveTrips() {
   const queryClient = useQueryClient();
+  const [fareInputs, setFareInputs] = useState<Record<string, string>>({});
 
   const { data: trips, isLoading } = useQuery({
     queryKey: ["live-trips"],
@@ -129,6 +133,45 @@ export default function LiveTrips() {
       toast.error("Failed to update status: " + error.message);
     },
   });
+
+  const updateFareMutation = useMutation({
+    mutationFn: async ({ tripId, fare }: { tripId: string; fare: number }) => {
+      const { error } = await supabase
+        .from("trips")
+        .update({ total_fare: fare })
+        .eq("id", tripId);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, { tripId }) => {
+      queryClient.invalidateQueries({ queryKey: ["live-trips"] });
+      setFareInputs(prev => {
+        const updated = { ...prev };
+        delete updated[tripId];
+        return updated;
+      });
+      toast.success("Fare updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to update fare: " + error.message);
+    },
+  });
+
+  const handleFareChange = (tripId: string, value: string) => {
+    setFareInputs(prev => ({ ...prev, [tripId]: value }));
+  };
+
+  const handleFareSave = (tripId: string, currentFare: number | null) => {
+    const inputValue = fareInputs[tripId];
+    const newFare = inputValue !== undefined ? parseFloat(inputValue) : currentFare;
+    
+    if (newFare === null || isNaN(newFare) || newFare < 0) {
+      toast.error("Please enter a valid fare amount");
+      return;
+    }
+    
+    updateFareMutation.mutate({ tripId, fare: newFare });
+  };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -242,6 +285,43 @@ export default function LiveTrips() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Fare Input */}
+                <div className="p-3 rounded-lg bg-success/5 border border-success/20">
+                  <label className="text-xs text-muted-foreground mb-2 block flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" />
+                    Trip Fare
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Enter fare..."
+                      value={fareInputs[trip.id] ?? (trip.total_fare ? String(trip.total_fare) : "")}
+                      onChange={(e) => handleFareChange(trip.id, e.target.value)}
+                      className="flex-1 bg-background"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleFareSave(trip.id, trip.total_fare ? Number(trip.total_fare) : null)}
+                      disabled={updateFareMutation.isPending}
+                      className="border-success/30 text-success hover:bg-success/10"
+                    >
+                      {updateFareMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  {trip.total_fare && (
+                    <p className="text-xs text-success mt-1">
+                      Current: ${Number(trip.total_fare).toFixed(2)}
+                    </p>
+                  )}
                 </div>
 
                 {/* Vehicle Info */}
