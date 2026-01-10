@@ -9,12 +9,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, User, MapPin, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Plus, Calendar, User, MapPin, Loader2, Play, XCircle, Check } from "lucide-react";
 import { format } from "date-fns";
+
+const PREORDER_STATUSES = [
+  { value: "pending", label: "Pending", icon: "⏳" },
+  { value: "assigned", label: "Assigned", icon: "👤" },
+  { value: "in_progress", label: "In Progress", icon: "🚗" },
+  { value: "completed", label: "Completed", icon: "✅" },
+  { value: "cancelled", label: "Cancelled", icon: "❌" },
+];
 
 export default function Preorders() {
   const [open, setOpen] = useState(false);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedPreorder, setSelectedPreorder] = useState<string | null>(null);
+  const [selectedDriver, setSelectedDriver] = useState("");
+  const [selectedCar, setSelectedCar] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [routeId, setRouteId] = useState("");
@@ -22,7 +34,6 @@ export default function Preorders() {
   const [scheduledTime, setScheduledTime] = useState("");
   const [notes, setNotes] = useState("");
   
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: preorders, isLoading } = useQuery({
@@ -32,7 +43,7 @@ export default function Preorders() {
         .from("preorders")
         .select(`
           *,
-          routes(name, origin, destination),
+          routes(id, name, origin, destination, base_price),
           drivers(name),
           cars(plate_number, model)
         `)
@@ -52,7 +63,7 @@ export default function Preorders() {
   });
 
   const { data: drivers } = useQuery({
-    queryKey: ["drivers"],
+    queryKey: ["available-drivers"],
     queryFn: async () => {
       const { data, error } = await supabase.from("drivers").select("*").eq("status", "available");
       if (error) throw error;
@@ -61,7 +72,7 @@ export default function Preorders() {
   });
 
   const { data: cars } = useQuery({
-    queryKey: ["cars"],
+    queryKey: ["available-cars"],
     queryFn: async () => {
       const { data, error } = await supabase.from("cars").select("*").eq("status", "idle");
       if (error) throw error;
@@ -83,12 +94,12 @@ export default function Preorders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["preorders"] });
-      toast({ title: "Pre-order created successfully" });
+      toast.success("Pre-order created successfully");
       setOpen(false);
       resetForm();
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error: " + error.message);
     },
   });
 
@@ -106,10 +117,104 @@ export default function Preorders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["preorders"] });
-      toast({ title: "Driver assigned successfully" });
+      toast.success("Driver and car assigned successfully");
+      setAssignDialogOpen(false);
+      setSelectedPreorder(null);
+      setSelectedDriver("");
+      setSelectedCar("");
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast.error("Error: " + error.message);
+    },
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ preorderId, status }: { preorderId: string; status: string }) => {
+      const { error } = await supabase
+        .from("preorders")
+        .update({ status })
+        .eq("id", preorderId);
+      if (error) throw error;
+    },
+    onSuccess: (_, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ["preorders"] });
+      toast.success(`Status updated to ${status.replace(/_/g, " ")}`);
+    },
+    onError: (error: any) => {
+      toast.error("Error: " + error.message);
+    },
+  });
+
+  const startTrip = useMutation({
+    mutationFn: async (preorder: any) => {
+      // Create a new trip from the preorder
+      const { data: trip, error: tripError } = await supabase
+        .from("trips")
+        .insert({
+          car_id: preorder.assigned_car_id,
+          driver_id: preorder.assigned_driver_id,
+          route_id: preorder.route_id,
+          preorder_id: preorder.id,
+          status: "heading_to_pickup",
+          total_fare: preorder.routes?.base_price || null,
+        })
+        .select()
+        .single();
+      
+      if (tripError) throw tripError;
+
+      // Update preorder status to in_progress
+      const { error: preorderError } = await supabase
+        .from("preorders")
+        .update({ status: "in_progress" })
+        .eq("id", preorder.id);
+      
+      if (preorderError) throw preorderError;
+
+      // Update car status to heading_to_pickup
+      const { error: carError } = await supabase
+        .from("cars")
+        .update({ status: "heading_to_pickup" })
+        .eq("id", preorder.assigned_car_id);
+      
+      if (carError) throw carError;
+
+      // Update driver status to busy
+      const { error: driverError } = await supabase
+        .from("drivers")
+        .update({ status: "busy" })
+        .eq("id", preorder.assigned_driver_id);
+      
+      if (driverError) throw driverError;
+
+      return trip;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preorders"] });
+      queryClient.invalidateQueries({ queryKey: ["live-trips"] });
+      queryClient.invalidateQueries({ queryKey: ["available-drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["available-cars"] });
+      toast.success("Trip started! Check Live Trips to monitor.");
+    },
+    onError: (error: any) => {
+      toast.error("Error starting trip: " + error.message);
+    },
+  });
+
+  const cancelPreorder = useMutation({
+    mutationFn: async (preorderId: string) => {
+      const { error } = await supabase
+        .from("preorders")
+        .update({ status: "cancelled" })
+        .eq("id", preorderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preorders"] });
+      toast.success("Pre-order cancelled");
+    },
+    onError: (error: any) => {
+      toast.error("Error: " + error.message);
     },
   });
 
@@ -126,10 +231,16 @@ export default function Preorders() {
     switch (status) {
       case 'pending': return 'charging';
       case 'assigned': return 'available';
+      case 'in_progress': return 'highway';
       case 'completed': return 'idle';
       case 'cancelled': return 'busy';
       default: return 'idle';
     }
+  };
+
+  const openAssignDialog = (preorderId: string) => {
+    setSelectedPreorder(preorderId);
+    setAssignDialogOpen(true);
   };
 
   return (
@@ -227,6 +338,63 @@ export default function Preorders() {
         </Dialog>
       </div>
 
+      {/* Assign Driver/Car Dialog */}
+      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle>Assign Driver & Vehicle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Driver</Label>
+              <Select value={selectedDriver} onValueChange={setSelectedDriver}>
+                <SelectTrigger className="bg-muted">
+                  <SelectValue placeholder="Choose a driver" />
+                </SelectTrigger>
+                <SelectContent>
+                  {drivers?.map((driver) => (
+                    <SelectItem key={driver.id} value={driver.id}>
+                      {driver.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Select Vehicle</Label>
+              <Select value={selectedCar} onValueChange={setSelectedCar}>
+                <SelectTrigger className="bg-muted">
+                  <SelectValue placeholder="Choose a vehicle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cars?.map((car) => (
+                    <SelectItem key={car.id} value={car.id}>
+                      {car.plate_number} - {car.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              className="w-full gradient-primary text-primary-foreground"
+              disabled={!selectedDriver || !selectedCar || assignDriver.isPending}
+              onClick={() => {
+                if (selectedPreorder) {
+                  assignDriver.mutate({ 
+                    preorderId: selectedPreorder, 
+                    driverId: selectedDriver, 
+                    carId: selectedCar 
+                  });
+                }
+              }}
+            >
+              {assignDriver.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Assign
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -300,25 +468,73 @@ export default function Preorders() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge variant={getStatusVariant(preorder.status)}>
-                          {preorder.status.replace(/\b\w/g, l => l.toUpperCase())}
-                        </StatusBadge>
+                        <Select
+                          value={preorder.status}
+                          onValueChange={(value) => updateStatus.mutate({ preorderId: preorder.id, status: value })}
+                          disabled={preorder.status === 'completed' || preorder.status === 'cancelled' || preorder.status === 'in_progress'}
+                        >
+                          <SelectTrigger className="w-[130px] h-8 text-xs">
+                            <StatusBadge variant={getStatusVariant(preorder.status)}>
+                              {preorder.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </StatusBadge>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PREORDER_STATUSES.map((status) => (
+                              <SelectItem key={status.value} value={status.value}>
+                                <span className="flex items-center gap-2">
+                                  <span>{status.icon}</span>
+                                  <span>{status.label}</span>
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
-                        {preorder.status === 'pending' && drivers && drivers.length > 0 && cars && cars.length > 0 && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => assignDriver.mutate({ 
-                              preorderId: preorder.id, 
-                              driverId: drivers[0].id,
-                              carId: cars[0].id
-                            })}
-                            disabled={assignDriver.isPending}
-                          >
-                            Assign
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {preorder.status === 'pending' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openAssignDialog(preorder.id)}
+                              disabled={!drivers?.length || !cars?.length}
+                            >
+                              <User className="w-3 h-3 mr-1" />
+                              Assign
+                            </Button>
+                          )}
+                          {preorder.status === 'assigned' && preorder.assigned_driver_id && preorder.assigned_car_id && (
+                            <Button
+                              size="sm"
+                              className="bg-success hover:bg-success/90 text-success-foreground"
+                              onClick={() => startTrip.mutate(preorder)}
+                              disabled={startTrip.isPending}
+                            >
+                              {startTrip.isPending ? (
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              ) : (
+                                <Play className="w-3 h-3 mr-1" />
+                              )}
+                              Start Trip
+                            </Button>
+                          )}
+                          {preorder.status === 'in_progress' && (
+                            <StatusBadge variant="highway" pulse>
+                              🚗 On Trip
+                            </StatusBadge>
+                          )}
+                          {(preorder.status === 'pending' || preorder.status === 'assigned') && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => cancelPreorder.mutate(preorder.id)}
+                              disabled={cancelPreorder.isPending}
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

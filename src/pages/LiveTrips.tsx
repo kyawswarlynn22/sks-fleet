@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Activity, Car, User, MapPin, Clock, Loader2, Check } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Activity, Car, User, MapPin, Clock, Loader2, Check, Calendar } from "lucide-react";
+import { formatDistanceToNow, format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -36,7 +36,8 @@ export default function LiveTrips() {
           *,
           cars(plate_number, model, car_type),
           drivers(name),
-          routes(name, origin, destination)
+          routes(name, origin, destination),
+          preorders(customer_name, customer_phone, scheduled_date, scheduled_time)
         `)
         .neq("status", "completed")
         .order("started_at", { ascending: false });
@@ -47,7 +48,13 @@ export default function LiveTrips() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ tripId, status }: { tripId: string; status: TripStatus }) => {
+    mutationFn: async ({ tripId, status, preorderId, carId, driverId }: { 
+      tripId: string; 
+      status: TripStatus; 
+      preorderId?: string | null;
+      carId: string;
+      driverId?: string | null;
+    }) => {
       const updateData: { status: TripStatus; completed_at?: string } = { status };
       
       if (status === "completed") {
@@ -60,9 +67,41 @@ export default function LiveTrips() {
         .eq("id", tripId);
       
       if (error) throw error;
+
+      // If trip is completed, update preorder status as well
+      if (status === "completed" && preorderId) {
+        await supabase
+          .from("preorders")
+          .update({ status: "completed" })
+          .eq("id", preorderId);
+      }
+
+      // Update car status
+      if (status === "completed") {
+        await supabase
+          .from("cars")
+          .update({ status: "idle" })
+          .eq("id", carId);
+        
+        // Update driver status back to available
+        if (driverId) {
+          await supabase
+            .from("drivers")
+            .update({ status: "available" })
+            .eq("id", driverId);
+        }
+      } else {
+        await supabase
+          .from("cars")
+          .update({ status })
+          .eq("id", carId);
+      }
     },
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ["live-trips"] });
+      queryClient.invalidateQueries({ queryKey: ["preorders"] });
+      queryClient.invalidateQueries({ queryKey: ["available-drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["available-cars"] });
       toast.success(`Trip status updated to ${status.replace(/_/g, " ")}`);
     },
     onError: (error) => {
@@ -131,13 +170,36 @@ export default function LiveTrips() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Preorder Info - if linked */}
+                {trip.preorders && (
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="flex items-center gap-2 text-xs text-primary mb-1">
+                      <Calendar className="w-3 h-3" />
+                      Pre-order Trip
+                    </div>
+                    <p className="font-medium text-sm">{trip.preorders.customer_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {trip.preorders.customer_phone}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Scheduled: {format(new Date(trip.preorders.scheduled_date), "MMM d")} at {trip.preorders.scheduled_time}
+                    </p>
+                  </div>
+                )}
+
                 {/* Status Update Selector */}
                 <div className="p-3 rounded-lg bg-muted/50 border border-border">
                   <label className="text-xs text-muted-foreground mb-2 block">Update Status</label>
                   <Select
                     value={trip.status}
                     onValueChange={(value: TripStatus) => 
-                      updateStatusMutation.mutate({ tripId: trip.id, status: value })
+                      updateStatusMutation.mutate({ 
+                        tripId: trip.id, 
+                        status: value,
+                        preorderId: trip.preorder_id,
+                        carId: trip.car_id,
+                        driverId: trip.driver_id,
+                      })
                     }
                     disabled={updateStatusMutation.isPending}
                   >
