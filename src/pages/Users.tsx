@@ -31,6 +31,7 @@ interface UserWithRole {
   id: string;
   user_id: string;
   role: UserRole;
+  email: string | null;
   created_at: string;
 }
 
@@ -261,7 +262,7 @@ export default function Users() {
                     </div>
                     <div>
                       <p className="font-medium text-foreground text-sm">
-                        {user.user_id.slice(0, 8)}...
+                        {user.email || "No email"}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Created {new Date(user.created_at).toLocaleDateString()}
