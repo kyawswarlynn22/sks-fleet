@@ -43,7 +43,7 @@ export default function Auth() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary shadow-glow mb-4">
             <Car className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">FleetOps</h1>
+          <h1 className="text-2xl font-bold text-foreground">Shwe Leo</h1>
           <p className="text-muted-foreground">Highway Taxi Management</p>
         </div>
 

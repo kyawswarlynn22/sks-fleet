@@ -63,8 +63,8 @@ export function AppSidebar() {
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-lg font-bold text-foreground truncate">FleetOps</h1>
-            <p className="text-xs text-muted-foreground">Highway Management</p>
+            <h1 className="text-lg font-bold text-foreground truncate">Shwe Leo</h1>
+            <p className="text-xs text-muted-foreground">Highway Taxi</p>
           </div>
         )}
       </div>
