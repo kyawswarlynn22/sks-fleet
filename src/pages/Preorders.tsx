@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { toast } from "sonner";
-import { Plus, Calendar, User, MapPin, Loader2, Play, XCircle, Check } from "lucide-react";
+import { Plus, Calendar, User, MapPin, Loader2, Play, XCircle, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 const PREORDER_STATUSES = [
@@ -21,8 +22,20 @@ const PREORDER_STATUSES = [
   { value: "cancelled", label: "Cancelled", icon: "❌" },
 ];
 
+interface PreorderData {
+  id: string;
+  customer_name: string;
+  customer_phone: string | null;
+  route_id: string | null;
+  scheduled_date: string;
+  scheduled_time: string;
+  notes: string | null;
+}
+
 export default function Preorders() {
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingPreorder, setEditingPreorder] = useState<PreorderData | null>(null);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedPreorder, setSelectedPreorder] = useState<string | null>(null);
   const [selectedDriver, setSelectedDriver] = useState("");
@@ -103,6 +116,45 @@ export default function Preorders() {
     },
   });
 
+  const updatePreorder = useMutation({
+    mutationFn: async () => {
+      if (!editingPreorder) return;
+      const { error } = await supabase.from("preorders").update({
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        route_id: routeId || null,
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime,
+        notes,
+      }).eq("id", editingPreorder.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preorders"] });
+      toast.success("Pre-order updated successfully");
+      setEditOpen(false);
+      setEditingPreorder(null);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error("Error: " + error.message);
+    },
+  });
+
+  const deletePreorder = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("preorders").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["preorders"] });
+      toast.success("Pre-order deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error("Error: " + error.message);
+    },
+  });
+
   const assignDriver = useMutation({
     mutationFn: async ({ preorderId, driverId, carId }: { preorderId: string; driverId: string; carId: string }) => {
       const { error } = await supabase
@@ -147,7 +199,6 @@ export default function Preorders() {
 
   const startTrip = useMutation({
     mutationFn: async (preorder: any) => {
-      // Create a new trip from the preorder
       const { data: trip, error: tripError } = await supabase
         .from("trips")
         .insert({
@@ -163,7 +214,6 @@ export default function Preorders() {
       
       if (tripError) throw tripError;
 
-      // Update preorder status to in_progress
       const { error: preorderError } = await supabase
         .from("preorders")
         .update({ status: "in_progress" })
@@ -171,7 +221,6 @@ export default function Preorders() {
       
       if (preorderError) throw preorderError;
 
-      // Update car status to heading_to_pickup
       const { error: carError } = await supabase
         .from("cars")
         .update({ status: "heading_to_pickup" })
@@ -179,7 +228,6 @@ export default function Preorders() {
       
       if (carError) throw carError;
 
-      // Update driver status to busy
       const { error: driverError } = await supabase
         .from("drivers")
         .update({ status: "busy" })
@@ -227,6 +275,17 @@ export default function Preorders() {
     setNotes("");
   };
 
+  const openEditDialog = (preorder: PreorderData) => {
+    setEditingPreorder(preorder);
+    setCustomerName(preorder.customer_name);
+    setCustomerPhone(preorder.customer_phone || "");
+    setRouteId(preorder.route_id || "");
+    setScheduledDate(preorder.scheduled_date);
+    setScheduledTime(preorder.scheduled_time);
+    setNotes(preorder.notes || "");
+    setEditOpen(true);
+  };
+
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'pending': return 'charging';
@@ -250,7 +309,7 @@ export default function Preorders() {
           <h1 className="text-3xl font-bold tracking-tight">Pre-orders</h1>
           <p className="text-muted-foreground">Manage scheduled trips and driver assignments</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gradient-primary text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
@@ -338,6 +397,88 @@ export default function Preorders() {
         </Dialog>
       </div>
 
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={(isOpen) => { setEditOpen(isOpen); if (!isOpen) { setEditingPreorder(null); resetForm(); } }}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle>Edit Pre-order</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); updatePreorder.mutate(); }} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Customer Name</Label>
+                <Input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="John Doe"
+                  required
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="+1 234 567 8900"
+                  className="bg-muted"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Route</Label>
+              <Select value={routeId} onValueChange={setRouteId}>
+                <SelectTrigger className="bg-muted">
+                  <SelectValue placeholder="Select route" />
+                </SelectTrigger>
+                <SelectContent>
+                  {routes?.map((route) => (
+                    <SelectItem key={route.id} value={route.id}>
+                      {route.name} ({route.origin} → {route.destination})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  required
+                  className="bg-muted"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Time</Label>
+                <Input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  required
+                  className="bg-muted"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Any special requirements..."
+                className="bg-muted"
+              />
+            </div>
+            <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={updatePreorder.isPending}>
+              {updatePreorder.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Update Pre-order
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Assign Driver/Car Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
         <DialogContent className="bg-card border-border">
@@ -423,7 +564,7 @@ export default function Preorders() {
                     <TableHead>Scheduled</TableHead>
                     <TableHead>Assigned</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -490,33 +631,51 @@ export default function Preorders() {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
                           {preorder.status === 'pending' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openAssignDialog(preorder.id)}
-                              disabled={!drivers?.length || !cars?.length}
-                            >
-                              <User className="w-3 h-3 mr-1" />
-                              Assign
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openAssignDialog(preorder.id)}
+                                disabled={!drivers?.length || !cars?.length}
+                              >
+                                <User className="w-3 h-3 mr-1" />
+                                Assign
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditDialog(preorder as PreorderData)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </>
                           )}
                           {preorder.status === 'assigned' && preorder.assigned_driver_id && preorder.assigned_car_id && (
-                            <Button
-                              size="sm"
-                              className="bg-success hover:bg-success/90 text-success-foreground"
-                              onClick={() => startTrip.mutate(preorder)}
-                              disabled={startTrip.isPending}
-                            >
-                              {startTrip.isPending ? (
-                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              ) : (
-                                <Play className="w-3 h-3 mr-1" />
-                              )}
-                              Start Trip
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                className="bg-success hover:bg-success/90 text-success-foreground"
+                                onClick={() => startTrip.mutate(preorder)}
+                                disabled={startTrip.isPending}
+                              >
+                                {startTrip.isPending ? (
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                ) : (
+                                  <Play className="w-3 h-3 mr-1" />
+                                )}
+                                Start Trip
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditDialog(preorder as PreorderData)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </>
                           )}
                           {preorder.status === 'in_progress' && (
                             <StatusBadge variant="highway" pulse>
@@ -524,15 +683,41 @@ export default function Preorders() {
                             </StatusBadge>
                           )}
                           {(preorder.status === 'pending' || preorder.status === 'assigned') && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => cancelPreorder.mutate(preorder.id)}
-                              disabled={cancelPreorder.isPending}
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => cancelPreorder.mutate(preorder.id)}
+                                disabled={cancelPreorder.isPending}
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Pre-order</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this pre-order for {preorder.customer_name}? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deletePreorder.mutate(preorder.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
                           )}
                         </div>
                       </TableCell>

@@ -7,13 +7,23 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users, FileCheck, FileX, Clock, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Users, FileCheck, FileX, Clock, Loader2, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+
+interface DriverData {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+}
 
 export default function Drivers() {
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingDriver, setEditingDriver] = useState<DriverData | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -50,10 +60,54 @@ export default function Drivers() {
     },
   });
 
+  const updateDriver = useMutation({
+    mutationFn: async () => {
+      if (!editingDriver) return;
+      const { error } = await supabase.from("drivers").update({
+        name,
+        phone,
+        email,
+      }).eq("id", editingDriver.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      toast({ title: "Driver updated successfully" });
+      setEditOpen(false);
+      setEditingDriver(null);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteDriver = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("drivers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      toast({ title: "Driver deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setName("");
     setPhone("");
     setEmail("");
+  };
+
+  const openEditDialog = (driver: DriverData) => {
+    setEditingDriver(driver);
+    setName(driver.name);
+    setPhone(driver.phone || "");
+    setEmail(driver.email || "");
+    setEditOpen(true);
   };
 
   const getFatigueLevel = (hours: number) => {
@@ -62,7 +116,7 @@ export default function Drivers() {
     return { label: "Fatigued", variant: "busy" as const, color: "text-destructive" };
   };
 
-  const MAX_DRIVING_HOURS = 11; // DOT regulation
+  const MAX_DRIVING_HOURS = 11;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -71,7 +125,7 @@ export default function Drivers() {
           <h1 className="text-3xl font-bold tracking-tight">Driver List</h1>
           <p className="text-muted-foreground">Manage your drivers and monitor fatigue levels</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gradient-primary text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
@@ -121,6 +175,50 @@ export default function Drivers() {
         </Dialog>
       </div>
 
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={(isOpen) => { setEditOpen(isOpen); if (!isOpen) { setEditingDriver(null); resetForm(); } }}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle>Edit Driver</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); updateDriver.mutate(); }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Smith"
+                required
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1 234 567 8900"
+                className="bg-muted"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="john@example.com"
+                className="bg-muted"
+              />
+            </div>
+            <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={updateDriver.isPending}>
+              {updateDriver.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Update Driver
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -149,6 +247,7 @@ export default function Drivers() {
                     <TableHead>Documents</TableHead>
                     <TableHead>Fatigue Monitor</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -209,6 +308,41 @@ export default function Drivers() {
                           >
                             {driver.status?.replace(/\b\w/g, l => l.toUpperCase())}
                           </StatusBadge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(driver as DriverData)}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Driver</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete {driver.name}? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteDriver.mutate(driver.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
