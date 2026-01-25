@@ -66,6 +66,7 @@ const translations: Record<Language, Record<string, string>> = {
     "booking.uploadSuccess": "Screenshot uploaded",
     "booking.uploading": "Uploading...",
     "booking.price": "Price",
+    "booking.noPaymentMethods": "Contact us for payment details",
     
     // Success
     "success.title": "Booking Confirmed!",
@@ -137,6 +138,7 @@ const translations: Record<Language, Record<string, string>> = {
     "booking.uploadSuccess": "ဓာတ်ပုံတင်ပြီးပါပြီ",
     "booking.uploading": "တင်နေသည်...",
     "booking.price": "ဈေးနှုန်း",
+    "booking.noPaymentMethods": "ငွေပေးချေရန် အသေးစိတ်အတွက် ကျွန်ုပ်တို့ကို ဆက်သွယ်ပါ",
     
     // Success
     "success.title": "ဘွတ်ကင်အတည်ပြုပြီးပါပြီ!",

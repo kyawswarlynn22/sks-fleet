@@ -13,6 +13,7 @@ import {
   BarChart3,
   LogOut,
   ChevronLeft,
+  CreditCard,
   ChevronRight,
   Shield,
 } from "lucide-react";
@@ -33,6 +34,7 @@ const navItems = [
   { to: "/trip-history", icon: History, label: "Trip History", adminOnly: false },
   { to: "/energy", icon: Fuel, label: "Energy Logs", adminOnly: false },
   { to: "/ledger", icon: Wallet, label: "Ledger", adminOnly: true },
+  { to: "/payment-methods", icon: CreditCard, label: "Payment Methods", adminOnly: true },
   { to: "/analytics", icon: BarChart3, label: "Analytics", adminOnly: true },
 ];
 
