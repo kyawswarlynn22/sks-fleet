@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard", adminOnly: false },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: false },
   { to: "/users", icon: Shield, label: "Users", adminOnly: true },
   { to: "/cars", icon: Car, label: "Car List", adminOnly: false },
   { to: "/drivers", icon: Users, label: "Driver List", adminOnly: false },
