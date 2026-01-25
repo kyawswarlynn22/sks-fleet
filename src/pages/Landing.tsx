@@ -116,23 +116,20 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.15),transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,hsl(var(--destructive)/0.1),transparent_70%)]" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-              {t("hero.title")} <span className="text-gradient">{t("hero.titleHighlight")}</span> {t("hero.titleEnd")}
+      <section className="py-24 lg:py-36">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight">
+              {t("hero.title")}
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-xl mx-auto leading-relaxed">
               {t("hero.description")}
             </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button size="lg" onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}>
-                {t("hero.bookNow")} <ChevronRight className="ml-2 h-5 w-5" />
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="px-8" onClick={() => document.getElementById("booking")?.scrollIntoView({ behavior: "smooth" })}>
+                {t("hero.bookNow")}
               </Button>
-              <Button size="lg" variant="outline" onClick={() => document.getElementById("routes")?.scrollIntoView({ behavior: "smooth" })}>
+              <Button size="lg" variant="outline" className="px-8" onClick={() => document.getElementById("routes")?.scrollIntoView({ behavior: "smooth" })}>
                 {t("hero.viewRoutes")}
               </Button>
             </div>

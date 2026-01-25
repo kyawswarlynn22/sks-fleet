@@ -14,10 +14,8 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.staffLogin": "Staff Login",
     
     // Hero
-    "hero.title": "Premium",
-    "hero.titleHighlight": "Highway Taxi",
-    "hero.titleEnd": "Service",
-    "hero.description": "Travel safely and comfortably between cities with Shwe Leo's professional fleet. Book your trip online in minutes.",
+    "hero.title": "Safe, Comfortable Highway Travel",
+    "hero.description": "Travel between cities with peace of mind. Our professional drivers and well-maintained vehicles ensure you arrive safely and on time.",
     "hero.bookNow": "Book Now",
     "hero.viewRoutes": "View Routes",
     
@@ -70,10 +68,8 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.staffLogin": "ဝန်ထမ်းဝင်ရောက်ရန်",
     
     // Hero
-    "hero.title": "အဆင့်မြင့်",
-    "hero.titleHighlight": "အဝေးပြေး တက္ကစီ",
-    "hero.titleEnd": "ဝန်ဆောင်မှု",
-    "hero.description": "Shwe Leo ၏ ကျွမ်းကျင်သော ကားများဖြင့် မြို့များကြား လုံခြုံစွာ သက်တောင့်သက်သာ ခရီးသွားပါ။ မိနစ်ပိုင်းအတွင်း အွန်လိုင်းမှ ကြိုတင်မှာယူပါ။",
+    "hero.title": "လုံခြုံ သက်တောင့်သက်သာ အဝေးပြေးခရီး",
+    "hero.description": "စိတ်ချလက်ချ မြို့များကြား ခရီးသွားပါ။ ကျွန်ုပ်တို့၏ ကျွမ်းကျင်သော ယာဉ်မောင်းများနှင့် ကောင်းမွန်စွာ ထိန်းသိမ်းထားသော ကားများဖြင့် လုံခြုံစွာ အချိန်မီ ရောက်ရှိမည်ကို အာမခံပါသည်။",
     "hero.bookNow": "ယခုဘွတ်ကင်",
     "hero.viewRoutes": "လမ်းကြောင်းများကြည့်ရန်",
     
