@@ -252,6 +252,7 @@ export type Database = {
           assigned_car_id: string | null
           assigned_driver_id: string | null
           created_at: string
+          customer_address: string | null
           customer_name: string
           customer_phone: string | null
           id: string
@@ -265,6 +266,7 @@ export type Database = {
           assigned_car_id?: string | null
           assigned_driver_id?: string | null
           created_at?: string
+          customer_address?: string | null
           customer_name: string
           customer_phone?: string | null
           id?: string
@@ -278,6 +280,7 @@ export type Database = {
           assigned_car_id?: string | null
           assigned_driver_id?: string | null
           created_at?: string
+          customer_address?: string | null
           customer_name?: string
           customer_phone?: string | null
           id?: string
