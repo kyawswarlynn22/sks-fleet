@@ -44,6 +44,19 @@ export default function Landing() {
     },
   });
 
+  const { data: paymentMethods = [] } = useQuery({
+    queryKey: ["public-payment-methods"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payment_methods")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const createPreorder = useMutation({
     mutationFn: async () => {
       if (!selectedDate || !selectedTime || !selectedRoute || !customerName || !customerPhone || !customerAddress || !paymentProofUrl) {
@@ -494,28 +507,30 @@ export default function Landing() {
                       </p>
                       
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-                              <span className="text-primary font-bold text-sm">KBZ</span>
+                        {paymentMethods.length > 0 ? (
+                          paymentMethods.map((method) => (
+                            <div key={method.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center overflow-hidden">
+                                  {method.qr_code_url ? (
+                                    <img src={method.qr_code_url} alt={method.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-primary font-bold text-xs">{method.name.substring(0, 3).toUpperCase()}</span>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-foreground">{method.name}</p>
+                                  <p className="text-sm text-muted-foreground">{method.account_name}</p>
+                                  <p className="text-sm font-mono text-primary">{method.account_number}</p>
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium text-foreground">KBZPay</p>
-                              <p className="text-sm text-muted-foreground">09-950045555</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-                              <span className="text-primary font-bold text-sm">Wave</span>
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">WavePay</p>
-                              <p className="text-sm text-muted-foreground">09-950045555</p>
-                            </div>
-                          </div>
-                        </div>
+                          ))
+                        ) : (
+                          <p className="text-center text-muted-foreground py-4">
+                            {t("booking.noPaymentMethods")}
+                          </p>
+                        )}
                       </div>
                       
                       <p className="text-xs text-muted-foreground text-center pt-2">

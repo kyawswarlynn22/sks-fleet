@@ -247,6 +247,39 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          account_name: string
+          account_number: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          qr_code_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          qr_code_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          qr_code_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       preorders: {
         Row: {
           assigned_car_id: string | null

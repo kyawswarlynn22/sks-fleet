@@ -21,6 +21,7 @@ import EnergyLogs from "./pages/EnergyLogs";
 import Ledger from "./pages/Ledger";
 import Analytics from "./pages/Analytics";
 import Users from "./pages/Users";
+import PaymentMethods from "./pages/PaymentMethods";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -116,6 +117,7 @@ const App = () => (
             <Route path="/energy" element={<ProtectedRoute><EnergyLogs /></ProtectedRoute>} />
             <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+            <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethods /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
