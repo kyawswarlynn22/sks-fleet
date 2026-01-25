@@ -346,10 +346,35 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Contact Section */}
+      <section id="contact" className="py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-foreground mb-4">Contact Us</h2>
+          <p className="text-muted-foreground text-center mb-12 max-w-xl mx-auto">
+            Have questions? Get in touch with us directly.
+          </p>
+
+          <div className="max-w-md mx-auto text-center">
+            <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-card/80 backdrop-blur border border-border/50">
+              <Phone className="w-6 h-6 text-primary" />
+              <a 
+                href="tel:09950045555" 
+                className="text-2xl font-bold text-foreground hover:text-primary transition-colors"
+              >
+                09-950045555
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-12 border-t border-border/30">
         <div className="container mx-auto px-4 text-center">
           <img src={shweLeoLogo} alt="Shwe Leo" className="h-10 object-contain mx-auto mb-4" />
+          <p className="text-muted-foreground text-sm mb-2">
+            Call us: <a href="tel:09950045555" className="hover:text-primary transition-colors">09-950045555</a>
+          </p>
           <p className="text-muted-foreground text-sm">
             © {new Date().getFullYear()} Shwe Leo. All rights reserved.
           </p>
