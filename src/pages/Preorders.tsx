@@ -562,6 +562,7 @@ export default function Preorders() {
                 <TableHeader>
                   <TableRow className="border-border hover:bg-muted/30">
                     <TableHead>Customer</TableHead>
+                    <TableHead>Address</TableHead>
                     <TableHead>Route</TableHead>
                     <TableHead>Scheduled</TableHead>
                     <TableHead>Payment</TableHead>
@@ -581,6 +582,13 @@ export default function Preorders() {
                             <p className="text-xs text-muted-foreground">{preorder.customer_phone}</p>
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {preorder.customer_address ? (
+                          <span className="text-sm">{preorder.customer_address}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {preorder.routes ? (
