@@ -1,11 +1,70 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { KPICard } from "@/components/ui/kpi-card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { DollarSign, Activity, Fuel, Wrench, Car, Users, MapPin, TrendingUp } from "lucide-react";
+import { DollarSign, Activity, Fuel, Wrench, Car, Users, MapPin, TrendingUp, RefreshCw, Database, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+type SyncResult = {
+  synced: number;
+  error?: string;
+};
+
+type SyncResponse = {
+  success: boolean;
+  message: string;
+  results: Record<string, SyncResult>;
+};
 
 export default function Dashboard() {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
+  const [syncResults, setSyncResults] = useState<SyncResponse | null>(null);
+  const { toast } = useToast();
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    setSyncResults(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-to-external");
+
+      if (error) {
+        toast({
+          title: "Sync Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSyncResults(data as SyncResponse);
+      setSyncDialogOpen(true);
+
+      const totalSynced = Object.values(data.results as Record<string, SyncResult>).reduce(
+        (sum, r) => sum + r.synced,
+        0
+      );
+      const hasErrors = Object.values(data.results as Record<string, SyncResult>).some((r) => r.error);
+
+      toast({
+        title: hasErrors ? "Sync Completed with Errors" : "Sync Successful",
+        description: `${totalSynced} records synced to external database`,
+        variant: hasErrors ? "destructive" : "default",
+      });
+    } catch (err) {
+      toast({
+        title: "Sync Error",
+        description: String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   const { data: cars } = useQuery({
     queryKey: ["cars"],
     queryFn: async () => {
@@ -67,10 +126,63 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Overview of your highway fleet operations</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Overview of your highway fleet operations</p>
+        </div>
+        <Button
+          onClick={handleSync}
+          disabled={isSyncing}
+          variant="outline"
+          className="gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+          {isSyncing ? "Syncing..." : "Sync to External DB"}
+        </Button>
       </div>
+
+      {/* Sync Results Dialog */}
+      <Dialog open={syncDialogOpen} onOpenChange={setSyncDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Sync Results
+            </DialogTitle>
+            <DialogDescription>
+              Data synchronization to external database completed
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            {syncResults?.results &&
+              Object.entries(syncResults.results).map(([table, result]) => (
+                <div
+                  key={table}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border/50"
+                >
+                  <div className="flex items-center gap-3">
+                    {result.error ? (
+                      <XCircle className="h-5 w-5 text-destructive" />
+                    ) : (
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                    )}
+                    <span className="font-medium capitalize">{table.replace(/_/g, " ")}</span>
+                  </div>
+                  <div className="text-right">
+                    {result.error ? (
+                      <span className="text-xs text-destructive">{result.error}</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        {result.synced} records
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
