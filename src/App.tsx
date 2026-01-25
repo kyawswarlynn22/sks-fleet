@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
@@ -90,28 +91,30 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-          <Route path="/cars" element={<ProtectedRoute><Cars /></ProtectedRoute>} />
-          <Route path="/drivers" element={<ProtectedRoute><Drivers /></ProtectedRoute>} />
-          <Route path="/routes" element={<ProtectedRoute><RoutesPage /></ProtectedRoute>} />
-          <Route path="/preorders" element={<ProtectedRoute><Preorders /></ProtectedRoute>} />
-          <Route path="/trips" element={<ProtectedRoute><LiveTrips /></ProtectedRoute>} />
-          <Route path="/trip-history" element={<ProtectedRoute><TripHistory /></ProtectedRoute>} />
-          <Route path="/energy" element={<ProtectedRoute><EnergyLogs /></ProtectedRoute>} />
-          <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
-          <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <LanguageProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+            <Route path="/cars" element={<ProtectedRoute><Cars /></ProtectedRoute>} />
+            <Route path="/drivers" element={<ProtectedRoute><Drivers /></ProtectedRoute>} />
+            <Route path="/routes" element={<ProtectedRoute><RoutesPage /></ProtectedRoute>} />
+            <Route path="/preorders" element={<ProtectedRoute><Preorders /></ProtectedRoute>} />
+            <Route path="/trips" element={<ProtectedRoute><LiveTrips /></ProtectedRoute>} />
+            <Route path="/trip-history" element={<ProtectedRoute><TripHistory /></ProtectedRoute>} />
+            <Route path="/energy" element={<ProtectedRoute><EnergyLogs /></ProtectedRoute>} />
+            <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 
