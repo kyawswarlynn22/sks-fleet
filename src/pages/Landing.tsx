@@ -111,7 +111,14 @@ export default function Landing() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <img src={shweLeoLogo} alt="Shwe Leo" className="h-12 object-contain" />
-          <LanguageSwitcher />
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link to="/auth">
+              <Button variant="outline" size="sm">
+                Staff Login
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
