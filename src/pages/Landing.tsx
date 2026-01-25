@@ -28,6 +28,7 @@ export default function Landing() {
   const [selectedTime, setSelectedTime] = useState("");
   const [notes, setNotes] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [step, setStep] = useState(1);
 
   const queryClient = useQueryClient();
 
@@ -68,6 +69,8 @@ export default function Landing() {
       setSelectedDate(undefined);
       setSelectedTime("");
       setNotes("");
+      setStep(1);
+      setNotes("");
       queryClient.invalidateQueries({ queryKey: ["public-routes"] });
     },
     onError: (error) => {
@@ -80,6 +83,9 @@ export default function Landing() {
   });
 
   const selectedRouteData = routes.find((r) => r.id === selectedRoute);
+  const depositAmount = selectedRouteData ? Math.round(Number(selectedRouteData.base_price) * 0.3) : 0;
+
+  const canProceedToStep2 = customerName && customerPhone && customerAddress && selectedRoute && selectedDate && selectedTime;
 
   const timeSlots = [
     "06:00", "06:30", "07:00", "07:30", "08:00", "08:30",
@@ -229,135 +235,250 @@ export default function Landing() {
 
           <Card className="max-w-2xl mx-auto bg-card/90 backdrop-blur border-border/50">
             <CardContent className="pt-6">
+              {/* Step Indicator */}
+              <div className="flex items-center justify-center gap-4 mb-8">
+                <div className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                  step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                )}>
+                  <span className="w-6 h-6 rounded-full bg-background/20 flex items-center justify-center text-xs">1</span>
+                  {t("booking.step1")}
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <div className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                  step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                )}>
+                  <span className="w-6 h-6 rounded-full bg-background/20 flex items-center justify-center text-xs">2</span>
+                  {t("booking.step2")}
+                </div>
+              </div>
+
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  createPreorder.mutate();
+                  if (step === 2) {
+                    createPreorder.mutate();
+                  }
                 }}
                 className="space-y-6"
               >
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">{t("booking.name")} *</Label>
-                    <Input
-                      id="name"
-                      placeholder={t("booking.name")}
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      required
-                      maxLength={100}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">{t("booking.phone")} *</Label>
-                    <Input
-                      id="phone"
-                      placeholder={t("booking.phonePlaceholder")}
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      required
-                      maxLength={20}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">{t("booking.address")} *</Label>
-                  <Input
-                    id="address"
-                    placeholder={t("booking.addressPlaceholder")}
-                    value={customerAddress}
-                    onChange={(e) => setCustomerAddress(e.target.value)}
-                    required
-                    maxLength={200}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="route">{t("booking.selectRoute")} *</Label>
-                  <Select value={selectedRoute} onValueChange={setSelectedRoute} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("booking.chooseRoute")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {routes.map((route) => (
-                        <SelectItem key={route.id} value={route.id}>
-                          {route.name} - {route.origin} → {route.destination}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedRouteData && (
-                    <p className="text-sm text-primary">
-                      {t("booking.price")}: {Number(selectedRouteData.base_price).toLocaleString()} MMK
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t("booking.travelDate")} *</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !selectedDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {selectedDate ? format(selectedDate, "PPP") : t("booking.pickDate")}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
+                {step === 1 && (
+                  <>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">{t("booking.name")} *</Label>
+                        <Input
+                          id="name"
+                          placeholder={t("booking.name")}
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          required
+                          maxLength={100}
                         />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="time">{t("booking.departureTime")} *</Label>
-                    <Select value={selectedTime} onValueChange={setSelectedTime} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("booking.selectTime")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeSlots.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">{t("booking.phone")} *</Label>
+                        <Input
+                          id="phone"
+                          placeholder={t("booking.phonePlaceholder")}
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                          required
+                          maxLength={20}
+                        />
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="notes">{t("booking.notes")}</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder={t("booking.notesPlaceholder")}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    maxLength={500}
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="address">{t("booking.address")} *</Label>
+                      <Input
+                        id="address"
+                        placeholder={t("booking.addressPlaceholder")}
+                        value={customerAddress}
+                        onChange={(e) => setCustomerAddress(e.target.value)}
+                        required
+                        maxLength={200}
+                      />
+                    </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={createPreorder.isPending}
-                >
-                  {createPreorder.isPending ? t("booking.submitting") : t("booking.submit")}
-                </Button>
+                    <div className="space-y-2">
+                      <Label htmlFor="route">{t("booking.selectRoute")} *</Label>
+                      <Select value={selectedRoute} onValueChange={setSelectedRoute} required>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("booking.chooseRoute")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {routes.map((route) => (
+                            <SelectItem key={route.id} value={route.id}>
+                              {route.name} - {route.origin} → {route.destination}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedRouteData && (
+                        <p className="text-sm text-primary">
+                          {t("booking.price")}: {Number(selectedRouteData.base_price).toLocaleString()} MMK
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>{t("booking.travelDate")} *</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !selectedDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {selectedDate ? format(selectedDate, "PPP") : t("booking.pickDate")}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={selectedDate}
+                              onSelect={setSelectedDate}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="time">{t("booking.departureTime")} *</Label>
+                        <Select value={selectedTime} onValueChange={setSelectedTime} required>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("booking.selectTime")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {timeSlots.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">{t("booking.notes")}</Label>
+                      <Textarea
+                        id="notes"
+                        placeholder={t("booking.notesPlaceholder")}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        maxLength={500}
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      className="w-full"
+                      size="lg"
+                      disabled={!canProceedToStep2}
+                      onClick={() => setStep(2)}
+                    >
+                      {t("booking.next")}
+                    </Button>
+                  </>
+                )}
+
+                {step === 2 && selectedRouteData && (
+                  <>
+                    {/* Deposit Summary */}
+                    <div className="bg-muted/50 rounded-xl p-6 space-y-4">
+                      <h3 className="text-xl font-semibold text-foreground text-center">
+                        {t("booking.depositTitle")}
+                      </h3>
+                      <p className="text-muted-foreground text-center text-sm">
+                        {t("booking.depositDescription")}
+                      </p>
+                      
+                      <div className="border-t border-border pt-4 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">{t("booking.routePrice")}</span>
+                          <span className="text-foreground font-medium">
+                            {Number(selectedRouteData.base_price).toLocaleString()} MMK
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-lg">
+                          <span className="text-primary font-semibold">{t("booking.depositAmount")}</span>
+                          <span className="text-primary font-bold text-2xl">
+                            {depositAmount.toLocaleString()} MMK
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Info */}
+                    <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+                      <h4 className="font-semibold text-foreground flex items-center gap-2">
+                        <Phone className="w-5 h-5 text-primary" />
+                        {t("booking.paymentInfo")}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {t("booking.paymentInstructions")}
+                      </p>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                              <span className="text-primary font-bold text-sm">KBZ</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">KBZPay</p>
+                              <p className="text-sm text-muted-foreground">09-950045555</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                              <span className="text-primary font-bold text-sm">Wave</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">WavePay</p>
+                              <p className="text-sm text-muted-foreground">09-950045555</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs text-muted-foreground text-center pt-2">
+                        {t("booking.afterPayment")}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        size="lg"
+                        onClick={() => setStep(1)}
+                      >
+                        {t("booking.back")}
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        size="lg"
+                        disabled={createPreorder.isPending}
+                      >
+                        {createPreorder.isPending ? t("booking.submitting") : t("booking.submit")}
+                      </Button>
+                    </div>
+                  </>
+                )}
               </form>
             </CardContent>
           </Card>
