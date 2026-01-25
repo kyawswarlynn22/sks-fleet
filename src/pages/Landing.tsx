@@ -22,6 +22,7 @@ export default function Landing() {
   const { t } = useLanguage();
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
   const [selectedRoute, setSelectedRoute] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
@@ -41,13 +42,14 @@ export default function Landing() {
 
   const createPreorder = useMutation({
     mutationFn: async () => {
-      if (!selectedDate || !selectedTime || !selectedRoute || !customerName || !customerPhone) {
+      if (!selectedDate || !selectedTime || !selectedRoute || !customerName || !customerPhone || !customerAddress) {
         throw new Error("Please fill all required fields");
       }
 
       const { error } = await supabase.from("preorders").insert({
         customer_name: customerName.trim(),
         customer_phone: customerPhone.trim(),
+        customer_address: customerAddress.trim(),
         route_id: selectedRoute,
         scheduled_date: format(selectedDate, "yyyy-MM-dd"),
         scheduled_time: selectedTime,
@@ -61,6 +63,7 @@ export default function Landing() {
       setShowSuccess(true);
       setCustomerName("");
       setCustomerPhone("");
+      setCustomerAddress("");
       setSelectedRoute("");
       setSelectedDate(undefined);
       setSelectedTime("");
@@ -256,6 +259,18 @@ export default function Landing() {
                       maxLength={20}
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">{t("booking.address")} *</Label>
+                  <Input
+                    id="address"
+                    placeholder={t("booking.addressPlaceholder")}
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
+                    required
+                    maxLength={200}
+                  />
                 </div>
 
                 <div className="space-y-2">
