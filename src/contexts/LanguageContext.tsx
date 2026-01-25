@@ -15,7 +15,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Hero
     "hero.title": "Premium",
-    "hero.titleHighlight": "Highway Transport",
+    "hero.titleHighlight": "Highway Taxi",
     "hero.titleEnd": "Service",
     "hero.description": "Travel safely and comfortably between cities with Shwe Leo's professional fleet. Book your trip online in minutes.",
     "hero.bookNow": "Book Now",
@@ -71,7 +71,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Hero
     "hero.title": "အဆင့်မြင့်",
-    "hero.titleHighlight": "အဝေးပြေး သယ်ယူပို့ဆောင်ရေး",
+    "hero.titleHighlight": "အဝေးပြေး တက္ကစီ",
     "hero.titleEnd": "ဝန်ဆောင်မှု",
     "hero.description": "Shwe Leo ၏ ကျွမ်းကျင်သော ကားများဖြင့် မြို့များကြား လုံခြုံစွာ သက်တောင့်သက်သာ ခရီးသွားပါ။ မိနစ်ပိုင်းအတွင်း အွန်လိုင်းမှ ကြိုတင်မှာယူပါ။",
     "hero.bookNow": "ယခုဘွတ်ကင်",
