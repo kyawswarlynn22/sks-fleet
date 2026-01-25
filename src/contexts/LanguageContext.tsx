@@ -60,7 +60,11 @@ const translations: Record<Language, Record<string, string>> = {
     "booking.depositAmount": "Deposit (30%)",
     "booking.paymentInfo": "Payment Information",
     "booking.paymentInstructions": "Please transfer the deposit to one of the following:",
-    "booking.afterPayment": "After payment, click 'Confirm Booking'. We will verify and contact you shortly.",
+    "booking.afterPayment": "After payment, upload the screenshot and click 'Confirm Booking'.",
+    "booking.uploadScreenshot": "Upload Payment Screenshot",
+    "booking.uploadHint": "Click to upload or drag and drop",
+    "booking.uploadSuccess": "Screenshot uploaded",
+    "booking.uploading": "Uploading...",
     "booking.price": "Price",
     
     // Success
@@ -127,7 +131,11 @@ const translations: Record<Language, Record<string, string>> = {
     "booking.depositAmount": "စရံငွေ (၃၀%)",
     "booking.paymentInfo": "ငွေပေးချေရန် အချက်အလက်",
     "booking.paymentInstructions": "စရံငွေကို အောက်ပါသို့ လွှဲပြောင်းပေးပါ:",
-    "booking.afterPayment": "ငွေပေးချေပြီးပါက 'ဘွတ်ကင်အတည်ပြုရန်' ကို နှိပ်ပါ။ ကျွန်ုပ်တို့ စစ်ဆေးပြီး မကြာမီ ဆက်သွယ်ပါမည်။",
+    "booking.afterPayment": "ငွေပေးချေပြီးပါက ဓာတ်ပုံတင်ပြီး 'ဘွတ်ကင်အတည်ပြုရန်' ကို နှိပ်ပါ။",
+    "booking.uploadScreenshot": "ငွေလွှဲပြေစာ ဓာတ်ပုံတင်ပါ",
+    "booking.uploadHint": "နှိပ်ပြီးတင်ပါ သို့မဟုတ် ဆွဲထည့်ပါ",
+    "booking.uploadSuccess": "ဓာတ်ပုံတင်ပြီးပါပြီ",
+    "booking.uploading": "တင်နေသည်...",
     "booking.price": "ဈေးနှုန်း",
     
     // Success

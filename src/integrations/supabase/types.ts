@@ -257,6 +257,7 @@ export type Database = {
           customer_phone: string | null
           id: string
           notes: string | null
+          payment_proof_url: string | null
           route_id: string | null
           scheduled_date: string
           scheduled_time: string
@@ -271,6 +272,7 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           notes?: string | null
+          payment_proof_url?: string | null
           route_id?: string | null
           scheduled_date: string
           scheduled_time: string
@@ -285,6 +287,7 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           notes?: string | null
+          payment_proof_url?: string | null
           route_id?: string | null
           scheduled_date?: string
           scheduled_time?: string
