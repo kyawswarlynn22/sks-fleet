@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { toast } from "sonner";
-import { Plus, Calendar, User, MapPin, Loader2, Play, XCircle, Pencil, Trash2 } from "lucide-react";
+import { Plus, Calendar, User, MapPin, Loader2, Play, XCircle, Pencil, Trash2, ImageIcon, Receipt } from "lucide-react";
 import { format } from "date-fns";
 
 const PREORDER_STATUSES = [
@@ -46,6 +46,8 @@ export default function Preorders() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [paymentProofDialogOpen, setPaymentProofDialogOpen] = useState(false);
+  const [viewingPaymentProof, setViewingPaymentProof] = useState<{ url: string; customerName: string } | null>(null);
   
   const queryClient = useQueryClient();
 
@@ -562,6 +564,7 @@ export default function Preorders() {
                     <TableHead>Customer</TableHead>
                     <TableHead>Route</TableHead>
                     <TableHead>Scheduled</TableHead>
+                    <TableHead>Payment</TableHead>
                     <TableHead>Assigned</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -597,6 +600,27 @@ export default function Preorders() {
                           <p>{format(new Date(preorder.scheduled_date), "MMM d, yyyy")}</p>
                           <p className="text-muted-foreground">{preorder.scheduled_time}</p>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {preorder.payment_proof_url ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-primary hover:text-primary"
+                            onClick={() => {
+                              setViewingPaymentProof({
+                                url: preorder.payment_proof_url,
+                                customerName: preorder.customer_name,
+                              });
+                              setPaymentProofDialogOpen(true);
+                            }}
+                          >
+                            <Receipt className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">No proof</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {preorder.drivers ? (
@@ -729,6 +753,50 @@ export default function Preorders() {
           )}
         </CardContent>
       </Card>
+
+      {/* Payment Proof Dialog */}
+      <Dialog open={paymentProofDialogOpen} onOpenChange={setPaymentProofDialogOpen}>
+        <DialogContent className="bg-card border-border max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" />
+              Payment Proof - {viewingPaymentProof?.customerName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {viewingPaymentProof?.url && (
+              <div className="relative rounded-lg overflow-hidden border border-border bg-muted">
+                <img 
+                  src={viewingPaymentProof.url} 
+                  alt="Payment proof screenshot" 
+                  className="w-full h-auto max-h-[60vh] object-contain"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setPaymentProofDialogOpen(false)}
+              >
+                Close
+              </Button>
+              <Button
+                variant="default"
+                className="flex-1"
+                onClick={() => {
+                  if (viewingPaymentProof?.url) {
+                    window.open(viewingPaymentProof.url, '_blank');
+                  }
+                }}
+              >
+                <ImageIcon className="w-4 h-4 mr-2" />
+                Open Full Size
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
