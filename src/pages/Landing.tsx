@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { CalendarIcon, MapPin, Clock, Car, Phone, ChevronRight, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, MapPin, Clock, Car, Phone, ChevronRight, CheckCircle2, Upload, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import shweLeoLogo from "@/assets/shwe-leo-logo.png";
 import { Link } from "react-router-dom";
@@ -29,6 +29,9 @@ export default function Landing() {
   const [notes, setNotes] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [step, setStep] = useState(1);
+  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+  const [paymentProofUrl, setPaymentProofUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -43,7 +46,7 @@ export default function Landing() {
 
   const createPreorder = useMutation({
     mutationFn: async () => {
-      if (!selectedDate || !selectedTime || !selectedRoute || !customerName || !customerPhone || !customerAddress) {
+      if (!selectedDate || !selectedTime || !selectedRoute || !customerName || !customerPhone || !customerAddress || !paymentProofUrl) {
         throw new Error("Please fill all required fields");
       }
 
@@ -56,6 +59,7 @@ export default function Landing() {
         scheduled_time: selectedTime,
         notes: notes.trim() || null,
         status: "pending",
+        payment_proof_url: paymentProofUrl,
       });
 
       if (error) throw error;
@@ -70,6 +74,8 @@ export default function Landing() {
       setSelectedTime("");
       setNotes("");
       setStep(1);
+      setPaymentProofFile(null);
+      setPaymentProofUrl(null);
       setNotes("");
       queryClient.invalidateQueries({ queryKey: ["public-routes"] });
     },
@@ -86,6 +92,65 @@ export default function Landing() {
   const depositAmount = selectedRouteData ? Math.round(Number(selectedRouteData.base_price) * 0.3) : 0;
 
   const canProceedToStep2 = customerName && customerPhone && customerAddress && selectedRoute && selectedDate && selectedTime;
+  const canSubmit = paymentProofUrl !== null;
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setPaymentProofFile(file);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("payment-proofs")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("payment-proofs")
+        .getPublicUrl(fileName);
+
+      setPaymentProofUrl(publicUrl);
+      toast({
+        title: t("booking.uploadSuccess"),
+        description: file.name,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setPaymentProofFile(null);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const timeSlots = [
     "06:00", "06:30", "07:00", "07:30", "08:00", "08:30",
@@ -458,6 +523,57 @@ export default function Landing() {
                       </p>
                     </div>
 
+                    {/* Screenshot Upload */}
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium">{t("booking.uploadScreenshot")} *</Label>
+                      <label
+                        htmlFor="payment-proof"
+                        className={cn(
+                          "flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl cursor-pointer transition-colors",
+                          paymentProofUrl 
+                            ? "border-primary bg-primary/5" 
+                            : "border-border hover:border-primary/50 hover:bg-muted/50"
+                        )}
+                      >
+                        {isUploading ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                            <span className="text-sm text-muted-foreground">{t("booking.uploading")}</span>
+                          </div>
+                        ) : paymentProofUrl ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden border border-border">
+                              <img 
+                                src={paymentProofUrl} 
+                                alt="Payment proof" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2 text-primary">
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span className="text-sm font-medium">{t("booking.uploadSuccess")}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">{paymentProofFile?.name}</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                              <Upload className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                            <span className="text-sm text-muted-foreground">{t("booking.uploadHint")}</span>
+                          </div>
+                        )}
+                        <input
+                          id="payment-proof"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </div>
+
                     <div className="flex gap-3">
                       <Button
                         type="button"
@@ -472,7 +588,7 @@ export default function Landing() {
                         type="submit"
                         className="flex-1"
                         size="lg"
-                        disabled={createPreorder.isPending}
+                        disabled={createPreorder.isPending || !canSubmit}
                       >
                         {createPreorder.isPending ? t("booking.submitting") : t("booking.submit")}
                       </Button>
