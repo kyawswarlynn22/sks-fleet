@@ -642,13 +642,13 @@ export default function Preorders() {
                       </TableCell>
                       <TableCell>
                         <Select
-                          value={preorder.status}
+                          value={preorder.status || 'pending'}
                           onValueChange={(value) => updateStatus.mutate({ preorderId: preorder.id, status: value })}
                           disabled={preorder.status === 'completed' || preorder.status === 'cancelled' || preorder.status === 'in_progress'}
                         >
                           <SelectTrigger className="w-[130px] h-8 text-xs">
-                            <StatusBadge variant={getStatusVariant(preorder.status)}>
-                              {preorder.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            <StatusBadge variant={getStatusVariant(preorder.status || 'pending')}>
+                              {(preorder.status || 'pending').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </StatusBadge>
                           </SelectTrigger>
                           <SelectContent>
