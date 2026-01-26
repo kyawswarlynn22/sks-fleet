@@ -101,7 +101,7 @@ export default function Landing() {
     },
   });
 
-  const selectedRouteData = routes.find((r) => r.id === selectedRoute);
+  const selectedRouteData = routes.find((r) => String(r.id) === selectedRoute);
   const depositAmount = selectedRouteData ? Math.round(Number(selectedRouteData.base_price) * 0.3) : 0;
 
   const canProceedToStep2 = customerName && customerPhone && customerAddress && selectedRoute && selectedDate && selectedTime;
@@ -388,7 +388,7 @@ export default function Landing() {
                         </SelectTrigger>
                         <SelectContent>
                           {routes.map((route) => (
-                            <SelectItem key={route.id} value={route.id}>
+                            <SelectItem key={String(route.id)} value={String(route.id)}>
                               {route.name} - {route.origin} → {route.destination}
                             </SelectItem>
                           ))}
