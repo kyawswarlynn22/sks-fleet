@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Users, FileCheck, FileX, Clock, Loader2, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { toStringId } from "@/lib/id-utils";
 
 interface DriverData {
   id: string | number;
@@ -256,7 +257,7 @@ export default function Drivers() {
                     const hoursPercent = (Number(driver.hours_driven_today) / MAX_DRIVING_HOURS) * 100;
                     
                     return (
-                      <TableRow key={String(driver.id)} className="border-border hover:bg-muted/30">
+                      <TableRow key={toStringId(driver.id)} className="border-border hover:bg-muted/30">
                         <TableCell className="font-medium">{driver.name}</TableCell>
                         <TableCell>
                           <div className="text-sm">
@@ -334,7 +335,7 @@ export default function Drivers() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => deleteDriver.mutate(String(driver.id))}
+                                    onClick={() => deleteDriver.mutate(toStringId(driver.id))}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
                                     Delete

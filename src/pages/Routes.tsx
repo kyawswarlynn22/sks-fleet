@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Route, MapPin, DollarSign, Loader2, Pencil, Trash2 } from "lucide-react";
+import { toStringId } from "@/lib/id-utils";
 
 interface RouteData {
   id: string | number;
@@ -339,7 +340,7 @@ export default function Routes() {
                 </TableHeader>
                 <TableBody>
                   {routes?.map((route) => (
-                    <TableRow key={String(route.id)} className="border-border hover:bg-muted/30">
+                    <TableRow key={toStringId(route.id)} className="border-border hover:bg-muted/30">
                       <TableCell className="font-medium">{route.name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -388,7 +389,7 @@ export default function Routes() {
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => deleteRoute.mutate(String(route.id))}
+                              onClick={() => deleteRoute.mutate(toStringId(route.id))}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
                                   Delete

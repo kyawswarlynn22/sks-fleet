@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Fuel, Battery, Zap, Droplet, Loader2, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import { toStringId } from "@/lib/id-utils";
 
 export default function EnergyLogs() {
   const [open, setOpen] = useState(false);
@@ -121,7 +122,7 @@ export default function EnergyLogs() {
                   </SelectTrigger>
                   <SelectContent>
                     {cars?.map((car) => (
-                      <SelectItem key={String(car.id)} value={String(car.id)}>
+                      <SelectItem key={toStringId(car.id)} value={toStringId(car.id)}>
                         {car.plate_number} - {car.model} ({car.car_type})
                       </SelectItem>
                     ))}

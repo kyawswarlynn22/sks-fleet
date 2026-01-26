@@ -28,6 +28,7 @@ import {
 import { History, CalendarIcon, Filter, X, Car, User, MapPin, DollarSign, Loader2 } from "lucide-react";
 import { format, formatDistanceStrict } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toStringId, formatIdForDisplay } from "@/lib/id-utils";
 
 export default function TripHistory() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
@@ -226,7 +227,7 @@ export default function TripHistory() {
                 <SelectContent>
                   <SelectItem value="all">All Drivers</SelectItem>
                   {drivers?.map((driver) => (
-                    <SelectItem key={String(driver.id)} value={String(driver.id)}>
+                    <SelectItem key={toStringId(driver.id)} value={toStringId(driver.id)}>
                       {driver.name}
                     </SelectItem>
                   ))}
@@ -244,7 +245,7 @@ export default function TripHistory() {
                 <SelectContent>
                   <SelectItem value="all">All Routes</SelectItem>
                   {routes?.map((route) => (
-                    <SelectItem key={String(route.id)} value={String(route.id)}>
+                    <SelectItem key={toStringId(route.id)} value={toStringId(route.id)}>
                       {route.name}
                     </SelectItem>
                   ))}
@@ -295,9 +296,9 @@ export default function TripHistory() {
                 </TableHeader>
                 <TableBody>
                   {trips?.map((trip) => (
-                    <TableRow key={String(trip.id)}>
+                    <TableRow key={toStringId(trip.id)}>
                       <TableCell className="font-mono text-xs">
-                        #{String(trip.id).slice(0, 8)}
+                        #{formatIdForDisplay(trip.id)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

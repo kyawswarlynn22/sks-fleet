@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
+import { toStringId, formatIdForDisplay } from "@/lib/id-utils";
 
 type TripStatus = Database["public"]["Enums"]["trip_status"];
 
@@ -90,7 +91,7 @@ export default function LiveTrips() {
             .insert({
               entry_type: "income",
               amount: totalFare,
-              description: `Trip completed - #${String(tripId).slice(0, 8)}`,
+              description: `Trip completed - #${formatIdForDisplay(tripId)}`,
               car_id: carId as any,
               driver_id: driverId as any,
               trip_id: tripId as any,
@@ -147,7 +148,7 @@ export default function LiveTrips() {
       queryClient.invalidateQueries({ queryKey: ["live-trips"] });
       setFareInputs(prev => {
         const updated = { ...prev };
-        delete updated[String(tripId)];
+        delete updated[toStringId(tripId)];
         return updated;
       });
       toast.success("Fare updated successfully");
@@ -158,11 +159,11 @@ export default function LiveTrips() {
   });
 
   const handleFareChange = (tripId: string | number, value: string) => {
-    setFareInputs(prev => ({ ...prev, [String(tripId)]: value }));
+    setFareInputs(prev => ({ ...prev, [toStringId(tripId)]: value }));
   };
 
   const handleFareSave = (tripId: string | number, currentFare: number | null) => {
-    const inputValue = fareInputs[String(tripId)];
+    const inputValue = fareInputs[toStringId(tripId)];
     const newFare = inputValue !== undefined ? parseFloat(inputValue) : currentFare;
     
     if (newFare === null || isNaN(newFare) || newFare < 0) {
@@ -216,14 +217,14 @@ export default function LiveTrips() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {trips?.map((trip) => (
             <Card 
-              key={String(trip.id)} 
+              key={toStringId(trip.id)} 
               className="bg-card border-border overflow-hidden hover:shadow-elevated transition-shadow"
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium flex items-center gap-2">
                     <span className="text-2xl">{getStatusIcon(trip.status)}</span>
-                    Trip #{String(trip.id).slice(0, 8)}
+                    Trip #{formatIdForDisplay(trip.id)}
                   </CardTitle>
                   <StatusBadge 
                     variant={getStatusVariant(trip.status)} 
@@ -299,7 +300,7 @@ export default function LiveTrips() {
                       min="0"
                       step="0.01"
                       placeholder="Enter fare..."
-                      value={fareInputs[String(trip.id)] ?? (trip.total_fare ? String(trip.total_fare) : "")}
+                      value={fareInputs[toStringId(trip.id)] ?? (trip.total_fare ? String(trip.total_fare) : "")}
                       onChange={(e) => handleFareChange(trip.id, e.target.value)}
                       className="flex-1 bg-background"
                     />
