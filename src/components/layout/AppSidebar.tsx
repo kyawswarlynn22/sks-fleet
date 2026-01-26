@@ -15,36 +15,30 @@ import {
   ChevronLeft,
   CreditCard,
   ChevronRight,
-  Shield,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useUserRole } from "@/hooks/useUserRole";
 
 const navItems = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", adminOnly: false },
-  { to: "/users", icon: Shield, label: "Users", adminOnly: true },
-  { to: "/cars", icon: Car, label: "Car List", adminOnly: false },
-  { to: "/drivers", icon: Users, label: "Driver List", adminOnly: false },
-  { to: "/routes", icon: Route, label: "Routes", adminOnly: false },
-  { to: "/preorders", icon: Calendar, label: "Pre-orders", adminOnly: false },
-  { to: "/trips", icon: Activity, label: "Live Trips", adminOnly: false },
-  { to: "/trip-history", icon: History, label: "Trip History", adminOnly: false },
-  { to: "/energy", icon: Fuel, label: "Energy Logs", adminOnly: false },
-  { to: "/ledger", icon: Wallet, label: "Ledger", adminOnly: true },
-  { to: "/payment-methods", icon: CreditCard, label: "Payment Methods", adminOnly: true },
-  { to: "/analytics", icon: BarChart3, label: "Analytics", adminOnly: true },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/cars", icon: Car, label: "Car List" },
+  { to: "/drivers", icon: Users, label: "Driver List" },
+  { to: "/routes", icon: Route, label: "Routes" },
+  { to: "/preorders", icon: Calendar, label: "Pre-orders" },
+  { to: "/trips", icon: Activity, label: "Live Trips" },
+  { to: "/trip-history", icon: History, label: "Trip History" },
+  { to: "/energy", icon: Fuel, label: "Energy Logs" },
+  { to: "/ledger", icon: Wallet, label: "Ledger" },
+  { to: "/payment-methods", icon: CreditCard, label: "Payment Methods" },
+  { to: "/analytics", icon: BarChart3, label: "Analytics" },
 ];
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
-  const { isAdmin } = useUserRole();
-
-  const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -73,7 +67,7 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {filteredNavItems.map((item) => {
+        {navItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (
             <NavLink
