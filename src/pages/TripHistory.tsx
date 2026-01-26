@@ -226,7 +226,7 @@ export default function TripHistory() {
                 <SelectContent>
                   <SelectItem value="all">All Drivers</SelectItem>
                   {drivers?.map((driver) => (
-                    <SelectItem key={driver.id} value={driver.id}>
+                    <SelectItem key={String(driver.id)} value={String(driver.id)}>
                       {driver.name}
                     </SelectItem>
                   ))}
@@ -244,7 +244,7 @@ export default function TripHistory() {
                 <SelectContent>
                   <SelectItem value="all">All Routes</SelectItem>
                   {routes?.map((route) => (
-                    <SelectItem key={route.id} value={route.id}>
+                    <SelectItem key={String(route.id)} value={String(route.id)}>
                       {route.name}
                     </SelectItem>
                   ))}
@@ -295,9 +295,9 @@ export default function TripHistory() {
                 </TableHeader>
                 <TableBody>
                   {trips?.map((trip) => (
-                    <TableRow key={trip.id}>
+                    <TableRow key={String(trip.id)}>
                       <TableCell className="font-mono text-xs">
-                        #{trip.id.slice(0, 8)}
+                        #{String(trip.id).slice(0, 8)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

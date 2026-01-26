@@ -121,7 +121,7 @@ export default function EnergyLogs() {
                   </SelectTrigger>
                   <SelectContent>
                     {cars?.map((car) => (
-                      <SelectItem key={car.id} value={car.id}>
+                      <SelectItem key={String(car.id)} value={String(car.id)}>
                         {car.plate_number} - {car.model} ({car.car_type})
                       </SelectItem>
                     ))}

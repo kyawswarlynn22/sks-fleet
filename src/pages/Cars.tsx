@@ -17,7 +17,7 @@ import { Progress } from "@/components/ui/progress";
 type CarType = "electric" | "gas";
 
 interface CarData {
-  id: string;
+  id: string | number;
   plate_number: string;
   model: string;
   year: number;
@@ -81,7 +81,7 @@ export default function Cars() {
         year,
         car_type: carType,
         mileage,
-      }).eq("id", editingCar.id);
+      }).eq("id", editingCar.id as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -97,8 +97,8 @@ export default function Cars() {
   });
 
   const deleteCar = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("cars").delete().eq("id", id);
+    mutationFn: async (id: string | number) => {
+      const { error } = await supabase.from("cars").delete().eq("id", id as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -324,7 +324,7 @@ export default function Cars() {
                 </TableHeader>
                 <TableBody>
                   {cars?.map((car) => (
-                    <TableRow key={car.id} className="border-border hover:bg-muted/30">
+                    <TableRow key={String(car.id)} className="border-border hover:bg-muted/30">
                       <TableCell className="font-medium">{car.plate_number}</TableCell>
                       <TableCell>{car.model}</TableCell>
                       <TableCell>{car.year}</TableCell>
@@ -390,7 +390,7 @@ export default function Cars() {
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => deleteCar.mutate(car.id)}
+                                  onClick={() => deleteCar.mutate(String(car.id))}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
                                   Delete

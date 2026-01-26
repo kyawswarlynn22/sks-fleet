@@ -265,7 +265,7 @@ function LedgerTable({ entries, isLoading, getCategoryLabel }: { entries: any[];
               </TableHeader>
               <TableBody>
                 {entries.map((entry) => (
-                  <TableRow key={entry.id} className="border-border hover:bg-muted/30">
+                  <TableRow key={String(entry.id)} className="border-border hover:bg-muted/30">
                     <TableCell>{format(new Date(entry.created_at), "MMM d, yyyy HH:mm")}</TableCell>
                     <TableCell>
                       <StatusBadge variant={entry.entry_type === "income" ? "available" : "busy"}>

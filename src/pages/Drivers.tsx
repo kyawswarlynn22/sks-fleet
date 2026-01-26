@@ -14,7 +14,7 @@ import { Plus, Users, FileCheck, FileX, Clock, Loader2, AlertTriangle, Pencil, T
 import { Progress } from "@/components/ui/progress";
 
 interface DriverData {
-  id: string;
+  id: string | number;
   name: string;
   phone: string | null;
   email: string | null;
@@ -67,7 +67,7 @@ export default function Drivers() {
         name,
         phone,
         email,
-      }).eq("id", editingDriver.id);
+      }).eq("id", editingDriver.id as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -83,8 +83,8 @@ export default function Drivers() {
   });
 
   const deleteDriver = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("drivers").delete().eq("id", id);
+    mutationFn: async (id: string | number) => {
+      const { error } = await supabase.from("drivers").delete().eq("id", id as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -256,7 +256,7 @@ export default function Drivers() {
                     const hoursPercent = (Number(driver.hours_driven_today) / MAX_DRIVING_HOURS) * 100;
                     
                     return (
-                      <TableRow key={driver.id} className="border-border hover:bg-muted/30">
+                      <TableRow key={String(driver.id)} className="border-border hover:bg-muted/30">
                         <TableCell className="font-medium">{driver.name}</TableCell>
                         <TableCell>
                           <div className="text-sm">
@@ -334,7 +334,7 @@ export default function Drivers() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => deleteDriver.mutate(driver.id)}
+                                    onClick={() => deleteDriver.mutate(String(driver.id))}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
                                     Delete

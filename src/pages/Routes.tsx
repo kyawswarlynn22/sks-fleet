@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Route, MapPin, DollarSign, Loader2, Pencil, Trash2 } from "lucide-react";
 
 interface RouteData {
-  id: string;
+  id: string | number;
   name: string;
   origin: string;
   destination: string;
@@ -77,7 +77,7 @@ export default function Routes() {
         distance_km: distanceKm,
         base_price: basePrice,
         estimated_tolls: estimatedTolls,
-      }).eq("id", editingRoute.id);
+      }).eq("id", editingRoute.id as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -93,8 +93,8 @@ export default function Routes() {
   });
 
   const deleteRoute = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("routes").delete().eq("id", id);
+    mutationFn: async (id: string | number) => {
+      const { error } = await supabase.from("routes").delete().eq("id", id as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -339,7 +339,7 @@ export default function Routes() {
                 </TableHeader>
                 <TableBody>
                   {routes?.map((route) => (
-                    <TableRow key={route.id} className="border-border hover:bg-muted/30">
+                    <TableRow key={String(route.id)} className="border-border hover:bg-muted/30">
                       <TableCell className="font-medium">{route.name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -387,10 +387,10 @@ export default function Routes() {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteRoute.mutate(route.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
+                            <AlertDialogAction
+                              onClick={() => deleteRoute.mutate(String(route.id))}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
                                   Delete
                                 </AlertDialogAction>
                               </AlertDialogFooter>
