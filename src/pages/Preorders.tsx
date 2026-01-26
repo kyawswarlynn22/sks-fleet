@@ -23,10 +23,10 @@ const PREORDER_STATUSES = [
 ];
 
 interface PreorderData {
-  id: string;
+  id: string | number;
   customer_name: string;
   customer_phone: string | null;
-  route_id: string | null;
+  route_id: string | number | null;
   scheduled_date: string;
   scheduled_time: string;
   notes: string | null;
@@ -128,7 +128,7 @@ export default function Preorders() {
         scheduled_date: scheduledDate,
         scheduled_time: scheduledTime,
         notes,
-      }).eq("id", editingPreorder.id);
+      }).eq("id", editingPreorder.id as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -144,8 +144,8 @@ export default function Preorders() {
   });
 
   const deletePreorder = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("preorders").delete().eq("id", id);
+    mutationFn: async (id: string | number) => {
+      const { error } = await supabase.from("preorders").delete().eq("id", id as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -158,15 +158,15 @@ export default function Preorders() {
   });
 
   const assignDriver = useMutation({
-    mutationFn: async ({ preorderId, driverId, carId }: { preorderId: string; driverId: string; carId: string }) => {
+    mutationFn: async ({ preorderId, driverId, carId }: { preorderId: string | number; driverId: string | number; carId: string | number }) => {
       const { error } = await supabase
         .from("preorders")
         .update({ 
-          assigned_driver_id: driverId, 
-          assigned_car_id: carId,
+          assigned_driver_id: driverId as any, 
+          assigned_car_id: carId as any,
           status: "assigned" 
         })
-        .eq("id", preorderId);
+        .eq("id", preorderId as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -183,11 +183,11 @@ export default function Preorders() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: async ({ preorderId, status }: { preorderId: string; status: string }) => {
+    mutationFn: async ({ preorderId, status }: { preorderId: string | number; status: string }) => {
       const { error } = await supabase
         .from("preorders")
         .update({ status })
-        .eq("id", preorderId);
+        .eq("id", preorderId as any);
       if (error) throw error;
     },
     onSuccess: (_, { status }) => {
@@ -204,10 +204,10 @@ export default function Preorders() {
       const { data: trip, error: tripError } = await supabase
         .from("trips")
         .insert({
-          car_id: preorder.assigned_car_id,
-          driver_id: preorder.assigned_driver_id,
-          route_id: preorder.route_id,
-          preorder_id: preorder.id,
+          car_id: preorder.assigned_car_id as any,
+          driver_id: preorder.assigned_driver_id as any,
+          route_id: preorder.route_id as any,
+          preorder_id: preorder.id as any,
           status: "heading_to_pickup",
           total_fare: preorder.routes?.base_price || null,
         })
@@ -219,21 +219,21 @@ export default function Preorders() {
       const { error: preorderError } = await supabase
         .from("preorders")
         .update({ status: "in_progress" })
-        .eq("id", preorder.id);
+        .eq("id", preorder.id as any);
       
       if (preorderError) throw preorderError;
 
       const { error: carError } = await supabase
         .from("cars")
         .update({ status: "heading_to_pickup" })
-        .eq("id", preorder.assigned_car_id);
+        .eq("id", preorder.assigned_car_id as any);
       
       if (carError) throw carError;
 
       const { error: driverError } = await supabase
         .from("drivers")
         .update({ status: "busy" })
-        .eq("id", preorder.assigned_driver_id);
+        .eq("id", preorder.assigned_driver_id as any);
       
       if (driverError) throw driverError;
 
@@ -281,7 +281,7 @@ export default function Preorders() {
     setEditingPreorder(preorder);
     setCustomerName(preorder.customer_name);
     setCustomerPhone(preorder.customer_phone || "");
-    setRouteId(preorder.route_id || "");
+    setRouteId(preorder.route_id ? String(preorder.route_id) : "");
     setScheduledDate(preorder.scheduled_date);
     setScheduledTime(preorder.scheduled_time);
     setNotes(preorder.notes || "");
@@ -573,7 +573,7 @@ export default function Preorders() {
                 </TableHeader>
                 <TableBody>
                   {preorders?.map((preorder) => (
-                    <TableRow key={preorder.id} className="border-border hover:bg-muted/30">
+                    <TableRow key={String(preorder.id)} className="border-border hover:bg-muted/30">
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
@@ -720,7 +720,7 @@ export default function Preorders() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => cancelPreorder.mutate(preorder.id)}
+                                onClick={() => cancelPreorder.mutate(String(preorder.id))}
                                 disabled={cancelPreorder.isPending}
                               >
                                 <XCircle className="w-4 h-4" />

@@ -282,13 +282,13 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-4">
               {recentTrips.map((trip) => (
-                <div key={trip.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
+                <div key={String(trip.id)} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Activity className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">Trip #{trip.id.slice(0, 8)}</p>
+                      <p className="font-medium text-sm">Trip #{String(trip.id).slice(0, 8)}</p>
                       <p className="text-xs text-muted-foreground">
                         Started {new Date(trip.started_at).toLocaleString()}
                       </p>

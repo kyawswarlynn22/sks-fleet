@@ -53,11 +53,11 @@ export default function LiveTrips() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ tripId, status, preorderId, carId, driverId, totalFare }: { 
-      tripId: string; 
+      tripId: string | number; 
       status: TripStatus; 
-      preorderId?: string | null;
-      carId: string;
-      driverId?: string | null;
+      preorderId?: string | number | null;
+      carId: string | number;
+      driverId?: string | number | null;
       totalFare?: number | null;
     }) => {
       const updateData: { status: TripStatus; completed_at?: string } = { status };
@@ -69,7 +69,7 @@ export default function LiveTrips() {
       const { error } = await supabase
         .from("trips")
         .update(updateData)
-        .eq("id", tripId);
+        .eq("id", tripId as any);
       
       if (error) throw error;
 
@@ -80,7 +80,7 @@ export default function LiveTrips() {
           await supabase
             .from("preorders")
             .update({ status: "completed" })
-            .eq("id", preorderId);
+            .eq("id", preorderId as any);
         }
 
         // Add income entry to ledger
@@ -90,10 +90,10 @@ export default function LiveTrips() {
             .insert({
               entry_type: "income",
               amount: totalFare,
-              description: `Trip completed - #${tripId.slice(0, 8)}`,
-              car_id: carId,
-              driver_id: driverId,
-              trip_id: tripId,
+              description: `Trip completed - #${String(tripId).slice(0, 8)}`,
+              car_id: carId as any,
+              driver_id: driverId as any,
+              trip_id: tripId as any,
             });
           
           if (ledgerError) {
@@ -105,20 +105,20 @@ export default function LiveTrips() {
         await supabase
           .from("cars")
           .update({ status: "idle" })
-          .eq("id", carId);
+          .eq("id", carId as any);
         
         // Update driver status back to available
         if (driverId) {
           await supabase
             .from("drivers")
             .update({ status: "available" })
-            .eq("id", driverId);
+            .eq("id", driverId as any);
         }
       } else {
         await supabase
           .from("cars")
           .update({ status })
-          .eq("id", carId);
+          .eq("id", carId as any);
       }
     },
     onSuccess: (_, { status }) => {
@@ -135,11 +135,11 @@ export default function LiveTrips() {
   });
 
   const updateFareMutation = useMutation({
-    mutationFn: async ({ tripId, fare }: { tripId: string; fare: number }) => {
+    mutationFn: async ({ tripId, fare }: { tripId: string | number; fare: number }) => {
       const { error } = await supabase
         .from("trips")
         .update({ total_fare: fare })
-        .eq("id", tripId);
+        .eq("id", tripId as any);
       
       if (error) throw error;
     },
@@ -147,7 +147,7 @@ export default function LiveTrips() {
       queryClient.invalidateQueries({ queryKey: ["live-trips"] });
       setFareInputs(prev => {
         const updated = { ...prev };
-        delete updated[tripId];
+        delete updated[String(tripId)];
         return updated;
       });
       toast.success("Fare updated successfully");
@@ -157,12 +157,12 @@ export default function LiveTrips() {
     },
   });
 
-  const handleFareChange = (tripId: string, value: string) => {
-    setFareInputs(prev => ({ ...prev, [tripId]: value }));
+  const handleFareChange = (tripId: string | number, value: string) => {
+    setFareInputs(prev => ({ ...prev, [String(tripId)]: value }));
   };
 
-  const handleFareSave = (tripId: string, currentFare: number | null) => {
-    const inputValue = fareInputs[tripId];
+  const handleFareSave = (tripId: string | number, currentFare: number | null) => {
+    const inputValue = fareInputs[String(tripId)];
     const newFare = inputValue !== undefined ? parseFloat(inputValue) : currentFare;
     
     if (newFare === null || isNaN(newFare) || newFare < 0) {
@@ -216,14 +216,14 @@ export default function LiveTrips() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {trips?.map((trip) => (
             <Card 
-              key={trip.id} 
+              key={String(trip.id)} 
               className="bg-card border-border overflow-hidden hover:shadow-elevated transition-shadow"
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium flex items-center gap-2">
                     <span className="text-2xl">{getStatusIcon(trip.status)}</span>
-                    Trip #{trip.id.slice(0, 8)}
+                    Trip #{String(trip.id).slice(0, 8)}
                   </CardTitle>
                   <StatusBadge 
                     variant={getStatusVariant(trip.status)} 
@@ -299,7 +299,7 @@ export default function LiveTrips() {
                       min="0"
                       step="0.01"
                       placeholder="Enter fare..."
-                      value={fareInputs[trip.id] ?? (trip.total_fare ? String(trip.total_fare) : "")}
+                      value={fareInputs[String(trip.id)] ?? (trip.total_fare ? String(trip.total_fare) : "")}
                       onChange={(e) => handleFareChange(trip.id, e.target.value)}
                       className="flex-1 bg-background"
                     />
