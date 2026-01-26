@@ -160,18 +160,28 @@ export default function Preorders() {
 
   const assignDriver = useMutation({
     mutationFn: async ({ preorderId, driverId, carId }: { preorderId: string | number; driverId: string | number; carId: string | number }) => {
+      if (!preorderId || !driverId || !carId) {
+        throw new Error("Please select both a driver and a vehicle");
+      }
+      
       const { error } = await supabase
         .from("preorders")
         .update({ 
-          assigned_driver_id: driverId as any, 
-          assigned_car_id: carId as any,
+          assigned_driver_id: driverId, 
+          assigned_car_id: carId,
           status: "assigned" 
         })
-        .eq("id", preorderId as any);
-      if (error) throw error;
+        .eq("id", preorderId);
+      
+      if (error) {
+        console.error("Assign driver error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["preorders"] });
+      queryClient.invalidateQueries({ queryKey: ["available-drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["available-cars"] });
       toast.success("Driver and car assigned successfully");
       setAssignDialogOpen(false);
       setSelectedPreorder(null);
@@ -179,7 +189,8 @@ export default function Preorders() {
       setSelectedCar("");
     },
     onError: (error: any) => {
-      toast.error("Error: " + error.message);
+      console.error("Assign driver error:", error);
+      toast.error("Error assigning driver and car: " + (error.message || "Unknown error"));
     },
   });
 
@@ -302,7 +313,19 @@ export default function Preorders() {
 
   const openAssignDialog = (preorderId: string | number) => {
     setSelectedPreorder(preorderId);
+    setSelectedDriver("");
+    setSelectedCar("");
     setAssignDialogOpen(true);
+  };
+
+  const closeAssignDialog = (open: boolean) => {
+    setAssignDialogOpen(open);
+    if (!open) {
+      // Reset form when dialog closes
+      setSelectedPreorder(null);
+      setSelectedDriver("");
+      setSelectedCar("");
+    }
   };
 
   return (
@@ -483,7 +506,7 @@ export default function Preorders() {
       </Dialog>
 
       {/* Assign Driver/Car Dialog */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+      <Dialog open={assignDialogOpen} onOpenChange={closeAssignDialog}>
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle>Assign Driver & Vehicle</DialogTitle>
@@ -496,11 +519,15 @@ export default function Preorders() {
                   <SelectValue placeholder="Choose a driver" />
                 </SelectTrigger>
                 <SelectContent>
-                  {drivers?.map((driver) => (
-                    <SelectItem key={toStringId(driver.id)} value={toStringId(driver.id)}>
-                      {driver.name}
-                    </SelectItem>
-                  ))}
+                  {drivers && drivers.length > 0 ? (
+                    drivers.map((driver) => (
+                      <SelectItem key={toStringId(driver.id)} value={toStringId(driver.id)}>
+                        {driver.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">No available drivers</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -511,29 +538,36 @@ export default function Preorders() {
                   <SelectValue placeholder="Choose a vehicle" />
                 </SelectTrigger>
                 <SelectContent>
-                  {cars?.map((car) => (
-                    <SelectItem key={toStringId(car.id)} value={toStringId(car.id)}>
-                      {car.plate_number} - {car.model}
-                    </SelectItem>
-                  ))}
+                  {cars && cars.length > 0 ? (
+                    cars.map((car) => (
+                      <SelectItem key={toStringId(car.id)} value={toStringId(car.id)}>
+                        {car.plate_number} - {car.model}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">No available vehicles</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
             <Button 
               className="w-full gradient-primary text-primary-foreground"
-              disabled={!selectedDriver || !selectedCar || assignDriver.isPending}
-              onClick={() => {
-                if (selectedPreorder) {
+              disabled={!selectedDriver || !selectedCar || !selectedPreorder || assignDriver.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (selectedPreorder && selectedDriver && selectedCar) {
                   assignDriver.mutate({ 
                     preorderId: selectedPreorder, 
                     driverId: selectedDriver, 
                     carId: selectedCar 
                   });
+                } else {
+                  toast.error("Please select both a driver and a vehicle");
                 }
               }}
             >
               {assignDriver.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Assign
+              {assignDriver.isPending ? "Assigning..." : "Assign"}
             </Button>
           </div>
         </DialogContent>
