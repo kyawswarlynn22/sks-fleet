@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { toast } from "sonner";
 import { Plus, Calendar, User, MapPin, Loader2, Play, XCircle, Pencil, Trash2, ImageIcon, Receipt } from "lucide-react";
 import { format } from "date-fns";
+import { toStringId } from "@/lib/id-utils";
 
 const PREORDER_STATUSES = [
   { value: "pending", label: "Pending", icon: "⏳" },
@@ -281,7 +282,7 @@ export default function Preorders() {
     setEditingPreorder(preorder);
     setCustomerName(preorder.customer_name);
     setCustomerPhone(preorder.customer_phone || "");
-    setRouteId(preorder.route_id ? String(preorder.route_id) : "");
+    setRouteId(preorder.route_id ? toStringId(preorder.route_id) : "");
     setScheduledDate(preorder.scheduled_date);
     setScheduledTime(preorder.scheduled_time);
     setNotes(preorder.notes || "");
@@ -352,7 +353,7 @@ export default function Preorders() {
                   </SelectTrigger>
                   <SelectContent>
                     {routes?.map((route) => (
-                      <SelectItem key={String(route.id)} value={String(route.id)}>
+                      <SelectItem key={toStringId(route.id)} value={toStringId(route.id)}>
                         {route.name} ({route.origin} → {route.destination})
                       </SelectItem>
                     ))}
@@ -435,7 +436,7 @@ export default function Preorders() {
                 </SelectTrigger>
                 <SelectContent>
                   {routes?.map((route) => (
-                    <SelectItem key={String(route.id)} value={String(route.id)}>
+                    <SelectItem key={toStringId(route.id)} value={toStringId(route.id)}>
                       {route.name} ({route.origin} → {route.destination})
                     </SelectItem>
                   ))}
@@ -496,7 +497,7 @@ export default function Preorders() {
                 </SelectTrigger>
                 <SelectContent>
                   {drivers?.map((driver) => (
-                    <SelectItem key={String(driver.id)} value={String(driver.id)}>
+                    <SelectItem key={toStringId(driver.id)} value={toStringId(driver.id)}>
                       {driver.name}
                     </SelectItem>
                   ))}
@@ -511,7 +512,7 @@ export default function Preorders() {
                 </SelectTrigger>
                 <SelectContent>
                   {cars?.map((car) => (
-                    <SelectItem key={String(car.id)} value={String(car.id)}>
+                    <SelectItem key={toStringId(car.id)} value={toStringId(car.id)}>
                       {car.plate_number} - {car.model}
                     </SelectItem>
                   ))}
@@ -573,7 +574,7 @@ export default function Preorders() {
                 </TableHeader>
                 <TableBody>
                   {preorders?.map((preorder) => (
-                    <TableRow key={String(preorder.id)} className="border-border hover:bg-muted/30">
+                    <TableRow key={toStringId(preorder.id)} className="border-border hover:bg-muted/30">
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />

@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Car, Battery, Fuel, Gauge, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { toStringId } from "@/lib/id-utils";
 
 type CarType = "electric" | "gas";
 
@@ -323,8 +324,8 @@ export default function Cars() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cars?.map((car) => (
-                    <TableRow key={String(car.id)} className="border-border hover:bg-muted/30">
+                {cars?.map((car) => (
+                    <TableRow key={toStringId(car.id)} className="border-border hover:bg-muted/30">
                       <TableCell className="font-medium">{car.plate_number}</TableCell>
                       <TableCell>{car.model}</TableCell>
                       <TableCell>{car.year}</TableCell>
@@ -390,7 +391,7 @@ export default function Cars() {
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => deleteCar.mutate(String(car.id))}
+                                  onClick={() => deleteCar.mutate(toStringId(car.id))}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
                                   Delete

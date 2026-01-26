@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Wallet, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { toStringId } from "@/lib/id-utils";
 
 type ExpenseCategory = "fuel" | "charging" | "toll" | "commission" | "repair" | "maintenance" | "other";
 
@@ -265,7 +266,7 @@ function LedgerTable({ entries, isLoading, getCategoryLabel }: { entries: any[];
               </TableHeader>
               <TableBody>
                 {entries.map((entry) => (
-                  <TableRow key={String(entry.id)} className="border-border hover:bg-muted/30">
+                  <TableRow key={toStringId(entry.id)} className="border-border hover:bg-muted/30">
                     <TableCell>{format(new Date(entry.created_at), "MMM d, yyyy HH:mm")}</TableCell>
                     <TableCell>
                       <StatusBadge variant={entry.entry_type === "income" ? "available" : "busy"}>
