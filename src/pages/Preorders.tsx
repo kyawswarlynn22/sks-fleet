@@ -352,7 +352,7 @@ export default function Preorders() {
                   </SelectTrigger>
                   <SelectContent>
                     {routes?.map((route) => (
-                      <SelectItem key={route.id} value={route.id}>
+                      <SelectItem key={String(route.id)} value={String(route.id)}>
                         {route.name} ({route.origin} → {route.destination})
                       </SelectItem>
                     ))}
@@ -435,7 +435,7 @@ export default function Preorders() {
                 </SelectTrigger>
                 <SelectContent>
                   {routes?.map((route) => (
-                    <SelectItem key={route.id} value={route.id}>
+                    <SelectItem key={String(route.id)} value={String(route.id)}>
                       {route.name} ({route.origin} → {route.destination})
                     </SelectItem>
                   ))}
@@ -496,7 +496,7 @@ export default function Preorders() {
                 </SelectTrigger>
                 <SelectContent>
                   {drivers?.map((driver) => (
-                    <SelectItem key={driver.id} value={driver.id}>
+                    <SelectItem key={String(driver.id)} value={String(driver.id)}>
                       {driver.name}
                     </SelectItem>
                   ))}
@@ -511,7 +511,7 @@ export default function Preorders() {
                 </SelectTrigger>
                 <SelectContent>
                   {cars?.map((car) => (
-                    <SelectItem key={car.id} value={car.id}>
+                    <SelectItem key={String(car.id)} value={String(car.id)}>
                       {car.plate_number} - {car.model}
                     </SelectItem>
                   ))}
