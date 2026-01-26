@@ -38,7 +38,7 @@ export default function Preorders() {
   const [editOpen, setEditOpen] = useState(false);
   const [editingPreorder, setEditingPreorder] = useState<PreorderData | null>(null);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [selectedPreorder, setSelectedPreorder] = useState<string | null>(null);
+  const [selectedPreorder, setSelectedPreorder] = useState<string | number | null>(null);
   const [selectedDriver, setSelectedDriver] = useState("");
   const [selectedCar, setSelectedCar] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -253,11 +253,11 @@ export default function Preorders() {
   });
 
   const cancelPreorder = useMutation({
-    mutationFn: async (preorderId: string) => {
+    mutationFn: async (preorderId: string | number) => {
       const { error } = await supabase
         .from("preorders")
         .update({ status: "cancelled" })
-        .eq("id", preorderId);
+        .eq("id", preorderId as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -300,7 +300,7 @@ export default function Preorders() {
     }
   };
 
-  const openAssignDialog = (preorderId: string) => {
+  const openAssignDialog = (preorderId: string | number) => {
     setSelectedPreorder(preorderId);
     setAssignDialogOpen(true);
   };
@@ -721,7 +721,7 @@ export default function Preorders() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => cancelPreorder.mutate(String(preorder.id))}
+                                onClick={() => cancelPreorder.mutate(preorder.id)}
                                 disabled={cancelPreorder.isPending}
                               >
                                 <XCircle className="w-4 h-4" />
