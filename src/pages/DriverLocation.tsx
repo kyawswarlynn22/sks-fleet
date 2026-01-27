@@ -28,6 +28,7 @@ export default function DriverLocation() {
         .select(`
           id,
           status,
+          car_id,
           cars(plate_number, model),
           routes(name, origin, destination)
         `)
@@ -52,7 +53,7 @@ export default function DriverLocation() {
       try {
         const { error } = await supabase.from("vehicle_locations").insert({
           trip_id: trip.id,
-          car_id: (trip as any).car_id || trip.id, // Fallback
+          car_id: (trip as any).car_id,
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           heading: position.coords.heading || 0,
