@@ -17,6 +17,7 @@ import shweLeoLogo from "@/assets/shwe-leo-logo.png";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 export default function Landing() {
   const { t } = useLanguage();
@@ -650,6 +651,9 @@ export default function Landing() {
           </p>
         </div>
       </footer>
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }
