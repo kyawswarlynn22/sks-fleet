@@ -45,7 +45,7 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
-  const { isDriver } = useUserRole();
+  const { isDriver, isAdmin } = useUserRole();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -94,7 +94,7 @@ export function AppSidebar() {
         })}
 
         {/* Driver-specific items */}
-        {isDriver && (
+        {(isDriver || isAdmin) && (
           <>
             {!collapsed && (
               <div className="pt-4 pb-2">
