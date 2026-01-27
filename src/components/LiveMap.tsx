@@ -31,19 +31,15 @@ export function LiveMap({ className }: LiveMapProps) {
   const [error, setError] = useState<string | null>(null);
   const [mapToken, setMapToken] = useState<string | null>(null);
 
-  // Fetch Mapbox token from edge function
+  // Get Mapbox token from environment variable
   useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("get-mapbox-token");
-        if (error) throw error;
-        setMapToken(data.token);
-      } catch (err: any) {
-        setError("Failed to load map configuration");
-        console.error("Mapbox token error:", err);
-      }
-    };
-    fetchToken();
+    const token = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
+    if (token) {
+      setMapToken(token);
+    } else {
+      setError("Mapbox token not configured. Add VITE_MAPBOX_PUBLIC_TOKEN to .env");
+      console.error("VITE_MAPBOX_PUBLIC_TOKEN not found in environment");
+    }
   }, []);
 
   // Fetch latest locations
