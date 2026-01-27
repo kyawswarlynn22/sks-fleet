@@ -23,6 +23,7 @@ import Analytics from "./pages/Analytics";
 import PaymentMethods from "./pages/PaymentMethods";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
+import DriverLocation from "./pages/DriverLocation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -118,6 +119,7 @@ const App = () => (
             <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethods /></ProtectedRoute>} />
+            <Route path="/driver-location" element={<DriverLocation />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
