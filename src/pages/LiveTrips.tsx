@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Activity, Car, User, MapPin, Clock, Loader2, Check, Calendar, DollarSign } from "lucide-react";
+import { Activity, Car, User, MapPin, Clock, Loader2, Check, Calendar, DollarSign, Map } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   Select,
@@ -17,6 +17,8 @@ import {
 import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
 import { toStringId, formatIdForDisplay } from "@/lib/id-utils";
+import { LiveMap } from "@/components/LiveMap";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TripStatus = Database["public"]["Enums"]["trip_status"];
 
@@ -199,22 +201,39 @@ export default function LiveTrips() {
         <p className="text-muted-foreground">Real-time tracking of active vehicles • Click status to update</p>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      ) : trips?.length === 0 ? (
-        <Card className="bg-card border-border">
-          <CardContent className="py-12">
-            <div className="text-center text-muted-foreground">
-              <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No active trips at the moment</p>
-              <p className="text-sm">Trips will appear here when vehicles are on the road</p>
+      <Tabs defaultValue="list" className="w-full">
+        <TabsList>
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Trip List
+          </TabsTrigger>
+          <TabsTrigger value="map" className="flex items-center gap-2">
+            <Map className="w-4 h-4" />
+            Live Map
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="map" className="mt-4">
+          <LiveMap />
+        </TabsContent>
+
+        <TabsContent value="list" className="mt-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          ) : trips?.length === 0 ? (
+            <Card className="bg-card border-border">
+              <CardContent className="py-12">
+                <div className="text-center text-muted-foreground">
+                  <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No active trips at the moment</p>
+                  <p className="text-sm">Trips will appear here when vehicles are on the road</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {trips?.map((trip) => (
             <Card 
               key={toStringId(trip.id)} 
@@ -367,6 +386,8 @@ export default function LiveTrips() {
           ))}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
