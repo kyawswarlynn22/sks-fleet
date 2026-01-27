@@ -6,12 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { MapPin, Navigation, Loader2, AlertCircle, CheckCircle2, Pause, Play } from "lucide-react";
-import { useUserRole } from "@/hooks/useUserRole";
-import { Navigate } from "react-router-dom";
 import shweLeoLogo from "@/assets/shwe-leo-logo.png";
 
 export default function DriverLocation() {
-  const { role, loading: roleLoading, isDriver, isAdmin } = useUserRole();
   const [selectedTrip, setSelectedTrip] = useState<string>("");
   const [isTracking, setIsTracking] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
@@ -144,17 +141,8 @@ export default function DriverLocation() {
     }
   }, [selectedTrip]);
 
-  if (roleLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!isDriver && !isAdmin) {
-    return <Navigate to="/auth" replace />;
-  }
+  // Remove role-based restriction - allow all authenticated users
+  // The page is public-accessible for any driver to use
 
   const selectedTripData = activeTrips.find((t) => String(t.id) === selectedTrip);
 
