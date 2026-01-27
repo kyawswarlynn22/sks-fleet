@@ -33,8 +33,25 @@ export default function Landing() {
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
   const [paymentProofUrl, setPaymentProofUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [logoTapCount, setLogoTapCount] = useState(0);
+  const [showStaffLogin, setShowStaffLogin] = useState(false);
 
   const queryClient = useQueryClient();
+
+  const handleLogoTap = () => {
+    const newCount = logoTapCount + 1;
+    setLogoTapCount(newCount);
+    
+    if (newCount >= 5) {
+      setShowStaffLogin(true);
+      setLogoTapCount(0);
+    }
+    
+    // Reset count after 2 seconds of no tapping
+    setTimeout(() => {
+      setLogoTapCount((prev) => (prev === newCount ? 0 : prev));
+    }, 2000);
+  };
 
   const { data: routes = [], isLoading: routesLoading } = useQuery({
     queryKey: ["public-routes"],
@@ -198,14 +215,21 @@ export default function Landing() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <img src={shweLeoLogo} alt="Shwe Leo" className="h-12 object-contain" />
+          <img 
+            src={shweLeoLogo} 
+            alt="Shwe Leo" 
+            className="h-12 object-contain cursor-pointer select-none" 
+            onClick={handleLogoTap}
+          />
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <Link to="/auth">
-              <Button variant="outline" size="sm">
-                Staff Login
-              </Button>
-            </Link>
+            {showStaffLogin && (
+              <Link to="/auth">
+                <Button variant="outline" size="sm">
+                  Staff Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </header>
