@@ -21,6 +21,7 @@ import EnergyLogs from "./pages/EnergyLogs";
 import Ledger from "./pages/Ledger";
 import Analytics from "./pages/Analytics";
 import PaymentMethods from "./pages/PaymentMethods";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -104,6 +105,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/install" element={<Install />} />
             <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/cars" element={<ProtectedRoute><Cars /></ProtectedRoute>} />
