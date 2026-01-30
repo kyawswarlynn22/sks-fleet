@@ -1,19 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { MapPin, Navigation, Loader2, AlertCircle, CheckCircle2, Pause, Play } from "lucide-react";
+import { MapPin, Navigation, Loader2, AlertCircle, CheckCircle2, Pause, Play, Smartphone, Globe } from "lucide-react";
 import shweLeoLogo from "@/assets/shwe-leo-logo.png";
+import { useBackgroundLocation } from "@/hooks/useBackgroundLocation";
 
 export default function DriverLocation() {
   const [selectedTrip, setSelectedTrip] = useState<string>("");
-  const [isTracking, setIsTracking] = useState(false);
-  const [watchId, setWatchId] = useState<number | null>(null);
-  const [lastPosition, setLastPosition] = useState<GeolocationPosition | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
   const [sendingLocation, setSendingLocation] = useState(false);
 
   // Fetch active trips for this driver
@@ -39,7 +37,7 @@ export default function DriverLocation() {
   });
 
   const sendLocation = useCallback(
-    async (position: GeolocationPosition) => {
+    async (location: { coords: { latitude: number; longitude: number; accuracy: number; speed: number | null; heading: number | null } }) => {
       if (!selectedTrip || sendingLocation) return;
 
       const trip = activeTrips.find((t) => String(t.id) === selectedTrip);
@@ -51,20 +49,17 @@ export default function DriverLocation() {
         const { error } = await supabase.from("vehicle_locations").insert({
           trip_id: trip.id,
           car_id: (trip as any).car_id,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          heading: position.coords.heading || 0,
-          speed: position.coords.speed ? position.coords.speed * 3.6 : 0, // Convert m/s to km/h
-          accuracy: position.coords.accuracy,
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          heading: location.coords.heading || 0,
+          speed: location.coords.speed ? location.coords.speed * 3.6 : 0, // Convert m/s to km/h
+          accuracy: location.coords.accuracy,
           recorded_at: new Date().toISOString(),
         });
 
         if (error) throw error;
-        setLastPosition(position);
-        setLocationError(null);
       } catch (err: any) {
         console.error("Error sending location:", err);
-        setLocationError("Failed to send location");
       } finally {
         setSendingLocation(false);
       }
@@ -72,77 +67,34 @@ export default function DriverLocation() {
     [selectedTrip, activeTrips, sendingLocation]
   );
 
-  const startTracking = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser");
-      return;
-    }
+  const {
+    isTracking,
+    isNative,
+    isReady,
+    lastLocation,
+    error: locationError,
+    startTracking,
+    stopTracking,
+  } = useBackgroundLocation({
+    onLocation: sendLocation,
+    onError: (error) => {
+      toast.error(error);
+    },
+  });
 
+  const handleStartTracking = useCallback(() => {
     if (!selectedTrip) {
       toast.error("Please select a trip first");
       return;
     }
+    startTracking();
+    toast.success(isNative ? "Background location tracking started" : "Location tracking started");
+  }, [selectedTrip, startTracking, isNative]);
 
-    setLocationError(null);
-
-    const id = navigator.geolocation.watchPosition(
-      (position) => {
-        sendLocation(position);
-      },
-      (error) => {
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationError("Location permission denied. Please enable location access.");
-            break;
-          case error.POSITION_UNAVAILABLE:
-            setLocationError("Location unavailable. Please check GPS settings.");
-            break;
-          case error.TIMEOUT:
-            setLocationError("Location request timed out. Retrying...");
-            break;
-          default:
-            setLocationError("An unknown error occurred.");
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 5000,
-      }
-    );
-
-    setWatchId(id);
-    setIsTracking(true);
-    toast.success("Location tracking started");
-  }, [selectedTrip, sendLocation]);
-
-  const stopTracking = useCallback(() => {
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
-      setWatchId(null);
-    }
-    setIsTracking(false);
+  const handleStopTracking = useCallback(() => {
+    stopTracking();
     toast.info("Location tracking stopped");
-  }, [watchId]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, [watchId]);
-
-  // Stop tracking if trip changes
-  useEffect(() => {
-    if (isTracking && selectedTrip) {
-      stopTracking();
-    }
-  }, [selectedTrip]);
-
-  // Remove role-based restriction - allow all authenticated users
-  // The page is public-accessible for any driver to use
+  }, [stopTracking]);
 
   const selectedTripData = activeTrips.find((t) => String(t.id) === selectedTrip);
 
@@ -154,7 +106,58 @@ export default function DriverLocation() {
           <img src={shweLeoLogo} alt="Shwe Leo" className="h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-bold">Driver Location</h1>
           <p className="text-muted-foreground text-sm">Share your live location with dispatch</p>
+          
+          {/* Platform indicator */}
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <Badge variant={isNative ? "default" : "secondary"} className="gap-1">
+              {isNative ? (
+                <>
+                  <Smartphone className="w-3 h-3" />
+                  Native App - Background Enabled
+                </>
+              ) : (
+                <>
+                  <Globe className="w-3 h-3" />
+                  Web Browser - Keep app open
+                </>
+              )}
+            </Badge>
+          </div>
         </div>
+
+        {/* Background tracking info for native */}
+        {isNative && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium text-sm">Background Location Active</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Location tracking will continue even when you close the app or turn off the screen.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Web browser warning */}
+        {!isNative && (
+          <Card className="border-warning/30 bg-warning/5">
+            <CardContent className="pt-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                <div>
+                  <p className="font-medium text-sm">Browser Limitation</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Keep this browser tab open and screen on. For background tracking, install the native app.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Trip Selection */}
         <Card>
@@ -224,7 +227,9 @@ export default function DriverLocation() {
                     <div>
                       <p className="font-medium text-success">Tracking Active</p>
                       <p className="text-xs text-muted-foreground">
-                        Sharing location every 5 seconds
+                        {isNative 
+                          ? "Background tracking enabled - close app anytime"
+                          : "Sharing location - keep browser open"}
                       </p>
                     </div>
                   </>
@@ -250,18 +255,18 @@ export default function DriverLocation() {
               )}
 
               {/* Last Position */}
-              {lastPosition && (
+              {lastLocation && (
                 <div className="p-3 rounded-lg bg-muted text-sm space-y-1">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-success" />
                     <span className="font-medium">Last Update</span>
                   </div>
                   <p className="text-muted-foreground">
-                    Lat: {lastPosition.coords.latitude.toFixed(6)}, Lng:{" "}
-                    {lastPosition.coords.longitude.toFixed(6)}
+                    Lat: {lastLocation.coords.latitude.toFixed(6)}, Lng:{" "}
+                    {lastLocation.coords.longitude.toFixed(6)}
                   </p>
                   <p className="text-muted-foreground">
-                    Accuracy: ±{lastPosition.coords.accuracy.toFixed(0)}m
+                    Accuracy: ±{lastLocation.coords.accuracy.toFixed(0)}m
                   </p>
                 </div>
               )}
@@ -271,17 +276,23 @@ export default function DriverLocation() {
                 className="w-full"
                 size="lg"
                 variant={isTracking ? "destructive" : "default"}
-                onClick={isTracking ? stopTracking : startTracking}
-                disabled={!selectedTrip || sendingLocation}
+                onClick={isTracking ? handleStopTracking : handleStartTracking}
+                disabled={!selectedTrip || !isReady || sendingLocation}
               >
-                {sendingLocation ? (
+                {!isReady ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : sendingLocation ? (
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 ) : isTracking ? (
                   <Pause className="w-5 h-5 mr-2" />
                 ) : (
                   <Play className="w-5 h-5 mr-2" />
                 )}
-                {isTracking ? "Stop Tracking" : "Start Tracking"}
+                {!isReady 
+                  ? "Initializing..." 
+                  : isTracking 
+                    ? "Stop Tracking" 
+                    : "Start Tracking"}
               </Button>
             </CardContent>
           </Card>
